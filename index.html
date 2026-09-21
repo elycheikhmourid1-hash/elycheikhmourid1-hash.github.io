@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Bureau — AICore Digital</title>
+<meta name="description" content="Bureau d'orientation supervisé — classement proposé, décision humaine, aucun envoi."/>
+<meta name="theme-color" content="#07080c"/>
+<style>
+:root{--bg:#07080c;--surface:#101218;--s2:#161a22;--fg:#e8eaee;--muted:#8b919c;--subtle:#5c6370;--border:rgba(232,234,238,.12);--glow:#9ec9d8;--accent:#c5d0d8;--ink:#07080c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 "IBM Plex Sans Arabic",Outfit,system-ui,sans-serif}
+.banner{margin:0;padding:.7rem 1.25rem;background:var(--surface);border-bottom:1px solid var(--border);color:var(--glow);font-size:.8125rem}
+header{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;padding:1.4rem 1.25rem 1rem;border-bottom:1px solid var(--border)}
+.kicker{margin:0;font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+[dir=rtl] .kicker{letter-spacing:.06em;text-transform:none}
+h1{margin:.3rem 0 0;font-size:clamp(1.6rem,4vw,2.4rem);font-weight:500;line-height:1.1}
+.sub{margin:.4rem 0 0;max-width:28rem;color:var(--muted);font-size:.9375rem}
+main{max-width:72rem;margin:0 auto;padding:1.1rem 1rem 4rem;display:grid;grid-template-columns:1fr;gap:1rem}
+@media(min-width:900px){main{grid-template-columns:1.1fr .9fr}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:32px;padding:1.5rem}
+.wide{grid-column:1/-1}
+h2{margin:0 0 .75rem;font-size:.8rem;font-weight:500;color:var(--muted)}
+.inbox-head{display:flex;justify-content:space-between;align-items:baseline;gap:.75rem;margin-bottom:.75rem}
+.inbox-head h2{margin:0}
+.count{margin:0;font:0.75rem/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--glow)}
+label{display:block;margin:.65rem 0 .3rem;font-size:.8125rem;color:var(--muted)}
+input,textarea{width:100%;border:1px solid var(--border);border-radius:8px;background:var(--s2);color:var(--fg);font:inherit;padding:.65rem .75rem}
+textarea{min-height:8.5rem}button{cursor:pointer;min-height:44px;border:1px solid var(--border);background:var(--surface);color:var(--fg);border-radius:999px;padding:0 .9rem;font:inherit}
+button.primary{background:var(--accent);color:var(--ink);border-color:transparent}
+button:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem}
+.pill{border:1px solid var(--border);border-radius:999px;padding:.2rem .7rem;font-size:.75rem;color:var(--muted);display:inline-block;margin:0 .25rem .35rem 0}
+.status{margin:.75rem 0 0;color:var(--muted);font-size:.875rem}.status.ready,.status.ok{color:var(--glow)}
+.log{list-style:none;margin:0;padding:0;max-height:18rem;overflow:auto}
+.log li{padding:.7rem 0;border-bottom:1px solid var(--border);font-size:.8125rem}
+.log time{display:block;font-size:.6875rem;color:var(--subtle);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.mails{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.mail{width:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.75rem;align-items:center;text-align:start;min-height:52px;padding:.65rem .75rem;border:1px solid transparent;border-radius:8px;background:transparent;color:inherit;font:inherit}
+.mail.on,.mail:hover{background:var(--s2);border-color:var(--border)}
+.mail b{display:block;font-size:.875rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mail em{display:block;font-style:normal;font-size:.75rem;color:var(--muted)}
+.ref{font:0.6875rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--glow)}
+.st{font-size:.6875rem;color:var(--subtle);white-space:nowrap}
+.from{margin:0 0 .75rem;font-size:.8125rem;color:var(--muted)}
+.dest{margin:.25rem 0 .75rem;font-size:1.05rem;line-height:1.4}
+.rule,.empty,.matches{margin:0;color:var(--muted);font-size:.9375rem;line-height:1.55}
+.matches{margin:0 0 .75rem;font-size:.8125rem}
+@media(max-width:767px){.mail{grid-template-columns:auto minmax(0,1fr)}.st{grid-column:2}}
+</style>
+</head>
+<body>
+<p class="banner" id="banner">عرض حي — لا يغادر أي بريد هذا الجهاز.</p>
+<header>
+  <div>
+    <p class="kicker">AICore Digital</p>
+    <h1 id="title">مكتب التوجيه المشرف</h1>
+    <p class="sub" id="sub">اقتراح تصنيف فقط. القرار للمسؤول. لا إرسال إلى إدارة.</p>
+  </div>
+  <div class="row">
+    <button type="button" id="langAr" class="primary">عربي</button>
+    <button type="button" id="langFr">FR</button>
+  </div>
+</header>
+<main>
+<section class="card wide">
+  <div class="inbox-head">
+    <h2 id="hInbox">صندوق الوارد</h2>
+    <p class="count" id="count"></p>
+  </div>
+  <ul class="mails" id="mails"></ul>
+</section>
+<section class="card">
+  <h2 id="hMail">الملف</h2>
+  <p class="from" id="from"></p>
+  <label for="subj" id="lSubj">الموضوع</label>
+  <input id="subj"/>
+  <label for="body" id="lBody">النص</label>
+  <textarea id="body"></textarea>
+  <div class="row">
+    <button type="button" class="primary" id="analyze">اقتراح تصنيف</button>
+    <button type="button" id="reset">مسح الملف</button>
+  </div>
+  <p class="status" id="status">بانتظار اقتراح.</p>
+</section>
+<section class="card">
+  <h2 id="hProp">اقتراح الأداة</h2>
+  <div id="prop" class="empty">لا اقتراح بعد. الأداة لا تتصرف وحدها.</div>
+</section>
+<section class="card">
+  <h2 id="hDec">قرار المسؤول</h2>
+  <label for="dest" id="lDest">الجهة بعد التعديل</label>
+  <input id="dest" disabled/>
+  <label for="note" id="lNote">تعليق المسؤول</label>
+  <input id="note" disabled/>
+  <div class="row">
+    <button type="button" class="primary" id="approve" disabled>اعتماد</button>
+    <button type="button" id="edit" disabled>تعديل ثم اعتماد</button>
+    <button type="button" id="reject" disabled>رفض</button>
+  </div>
+</section>
+<section class="card wide">
+  <h2 id="hLog">سجل التدقيق</h2>
+  <ul class="log" id="log"></ul>
+</section>
+</main>
+<script>
+const T={
+ar:{banner:"عرض حي — لا يغادر أي بريد هذا الجهاز.",title:"مكتب التوجيه المشرف",sub:"اقتراح تصنيف فقط. القرار للمسؤول. لا إرسال إلى إدارة.",inbox:"صندوق الوارد",open:"ملفات معلّقة",mail:"الملف",from:"المرسل",subj:"الموضوع",body:"النص",classify:"اقتراح تصنيف",reset:"مسح الملف",prop:"اقتراح الأداة",empty:"لا اقتراح بعد. الأداة لا تتصرف وحدها.",dest:"الجهة المقترحة",theme:"المحور",pri:"الأولوية",score:"درجة الاقتراح",matches:"كلمات مطابقة",rule:"لا إرسال خارجي. لا اختراع عنوان. لا فعل بلا أمر.",dec:"قرار المسؤول",approve:"اعتماد",edit:"تعديل ثم اعتماد",reject:"رفض",note:"تعليق المسؤول",destEdit:"الجهة بعد التعديل",audit:"سجل التدقيق",wait:"بانتظار اقتراح.",ready:"الاقتراح جاهز — بانتظار المسؤول.",ok:"اعتُمد التصنيف. ما زال لا إرسال آلي.",no:"رُفض. لم يخرج شيء من المكتب.",st:{inbox:"وارد",ready:"بانتظار",ok:"معتمد",no:"مرفوض"}},
+fr:{banner:"Démo — aucun courrier ne quitte cet appareil.",title:"Bureau d'orientation supervisé",sub:"Proposition de classement seulement. Décision humaine. Aucun envoi.",inbox:"Boîte d'entrée",open:"dossiers en attente",mail:"Dossier",from:"Expéditeur",subj:"Objet",body:"Texte",classify:"Classer",reset:"Effacer le dossier",prop:"Proposition de l'outil",empty:"Aucune proposition. L'outil n'agit pas seul.",dest:"Destination proposée",theme:"Thème",pri:"Priorité",score:"Score",matches:"Mots reconnus",rule:"Pas d'envoi. Pas d'adresse inventée. Pas d'acte sans ordre.",dec:"Décision humaine",approve:"Approuver",edit:"Modifier puis approuver",reject:"Rejeter",note:"Annotation",destEdit:"Destination corrigée",audit:"Journal d'audit",wait:"En attente d'une proposition.",ready:"Proposition prête — en attente du responsable.",ok:"Classement approuvé. Toujours aucun envoi automatique.",no:"Rejeté. Rien n'a quitté le bureau.",st:{inbox:"entrée",ready:"en attente",ok:"approuvé",no:"rejeté"}}
+};
+const DOSSIERS=[
+{id:"youth",ref:"B-2401",from:{ar:"مكتب الاستشارة التقنية",fr:"Bureau d'appui technique"},subj:{ar:"مذكرة — حماية النشء وتنظيم الفضاء الرقمي",fr:"Note — protection de la jeunesse et régulation de l'espace numérique"},body:{ar:"السيد الوزير،\n\nعرض دعم تقني محدود (تجربة تسعين يوماً) لتوجيه الملفات المتعلقة بحماية القُصّر على الإنترنت. لا قرار آلياً. الإحالة إلى المكتب المختص فقط.",fr:"Madame, Monsieur,\n\nOffre d'appui technique limité (pilote 90 jours) pour l'orientation des dossiers relatifs à la protection des mineurs en ligne. Aucune décision automatisée. Transmission au bureau compétent uniquement."}},
+{id:"wardip",ref:"B-2402",from:{ar:"WARDIP — لجنة فتح الأظرفة",fr:"WARDIP — commission d'ouverture"},subj:{ar:"طلب عروض — خدمات استشارية فكرية",fr:"Avis d'appel — prestations intellectuelles de consultant"},body:{ar:"السيد المدير،\n\nملف استشاري في إطار مناقصة الخدمات الفكرية. المطلوب: تصنيف داخلي فقط، دون إرسال إلى أي إدارة.",fr:"Monsieur le Directeur,\n\nDossier consultant dans le cadre d'un avis de marché de services intellectuels. Classement interne uniquement — aucun envoi à une administration."}},
+{id:"mtnima",ref:"B-2403",from:{ar:"الأمانة المركزية",fr:"Secrétariat central"},subj:{ar:"مراسلة توجيه — تحويل رقمي للمكاتب",fr:"Courrier d'orientation — transformation numérique des bureaux"},body:{ar:"مراسلة داخلية لتوجيه ملف التحوّل الرقمي نحو الأمانة المختصة. لا بريد خارجي.",fr:"Courrier interne d'orientation d'un dossier de transformation numérique vers le secrétariat compétent. Aucun courrier externe."}},
+{id:"bank",ref:"B-2404",from:{ar:"الرقابة الداخلية",fr:"Contrôle interne"},subj:{ar:"إجراء امتثال بنك — دون إرسال خارجي",fr:"Procédure de conformité bancaire — sans envoi externe"},body:{ar:"مسودة إجراء امتثال داخلي لمؤسسة بنكية. يبقى الملف داخل المكتب. لا إحالة آلية.",fr:"Projet de procédure de conformité interne pour un établissement bancaire. Le dossier reste au bureau. Aucune transmission automatique."}},
+{id:"plain",ref:"B-2405",from:{ar:"مكتب الضبط",fr:"Bureau d'ordre"},subj:{ar:"طلب معلومات عامة",fr:"Demande d'information générale"},body:{ar:"طلب توضيح مواعيد الاستقبال. لا محور محدّد في النص.",fr:"Demande de clarification des horaires d'accueil. Aucun thème explicite dans le texte."}}
+];
+const RULES=[
+{k:["jeunesse","mineur","protection","espace numérique","régulation","نشء","قصر","قصّر","حماية","فضاء"],dest:{ar:"وزارة الاستقلالية والشباب والرياضة — مكتب التوجيه",fr:"Ministère de l'Autonomisation, de l'Emploi, de la Jeunesse et des Sports"},theme:{ar:"حماية القُصّر / الفضاء الرقمي",fr:"Protection des mineurs / espace numérique"},p:{ar:"عالية",fr:"haute"}},
+{k:["wardip","consultant","marché","avis","استشاري","مناقصة","خدمات فكرية"],dest:{ar:"WARDIP / التحوّل الرقمي — الخدمات الفكرية",fr:"WARDIP / MTNIMA — services intellectuels"},theme:{ar:"خدمات فكرية",fr:"Prestations intellectuelles"},p:{ar:"متوسطة",fr:"moyenne"}},
+{k:["kitab","courrier","orientation","transformation numérique","تحول","توجيه","مراسلة"],dest:{ar:"وزارة التحوّل الرقمي — الأمانة المركزية",fr:"MTNIMA — Secrétariat central"},theme:{ar:"توجيه إداري",fr:"Orientation administrative"},p:{ar:"عالية",fr:"haute"}},
+{k:["banque","procédure","conformité","بنك","امتثال","إجراء"],dest:{ar:"مؤسسة بنكية — الرقابة الداخلية (غير مُرسل)",fr:"Établissement bancaire — contrôle interne (non envoyé)"},theme:{ar:"إجراءات داخلية",fr:"Procédures internes"},p:{ar:"متوسطة",fr:"moyenne"}}
+];
+const FALL={dest:{ar:"مكتب الضبط — يحدّده المسؤول",fr:"Bureau d'ordre — à qualifier par l'humain"},theme:{ar:"غير مصنّف",fr:"Non classé"},p:{ar:"منخفضة",fr:"basse"},matches:[],score:12};
+let lang="ar", proposal=null, activeId="youth";
+const queue={};
+function classify(text){
+  const t=text.toLowerCase();
+  let best=null;
+  for(const r of RULES){
+    const matches=r.k.filter(k=>t.includes(k.toLowerCase()));
+    if(!matches.length) continue;
+    if(!best||matches.length>best.matches.length) best={r,matches};
+  }
+  if(!best) return FALL;
+  return {dest:best.r.dest,theme:best.r.theme,p:best.r.p,matches:best.matches,score:Math.min(92,38+best.matches.length*11)};
+}
+function stamp(){return new Date().toISOString().replace("T"," ").slice(0,19)+" UTC"}
+function addLog(msg){
+  const li=document.createElement("li");
+  li.innerHTML="<time>"+stamp()+"</time>"+msg;
+  document.getElementById("log").prepend(li);
+}
+function setBtns(on){["approve","edit","reject","dest","note"].forEach(id=>document.getElementById(id).disabled=!on)}
+function dossier(){return DOSSIERS.find(d=>d.id===activeId)}
+function statusOf(id){return queue[id]||"inbox"}
+function pending(){return DOSSIERS.filter(d=>statusOf(d.id)==="inbox"||statusOf(d.id)==="ready").length}
+function renderMails(){
+  const c=T[lang];
+  document.getElementById("count").textContent=pending()+" "+c.open;
+  document.getElementById("mails").innerHTML=DOSSIERS.map(d=>{
+    const st=statusOf(d.id);
+    return '<li><button type="button" class="mail'+(d.id===activeId?" on":"")+'" data-id="'+d.id+'"><span class="ref">'+d.ref+'</span><span><b>'+d.subj[lang]+'</b><em>'+d.from[lang]+'</em></span><span class="st">'+c.st[st]+'</span></button></li>';
+  }).join("");
+  document.querySelectorAll(".mail").forEach(btn=>btn.onclick=()=>openDossier(btn.dataset.id));
+}
+function openDossier(id){
+  activeId=id;
+  const d=dossier();
+  document.getElementById("subj").value=d.subj[lang];
+  document.getElementById("body").value=d.body[lang];
+  document.getElementById("from").textContent=T[lang].from+" : "+d.from[lang];
+  document.getElementById("hMail").textContent=T[lang].mail+" "+d.ref;
+  proposal=null;
+  document.getElementById("prop").textContent=T[lang].empty;
+  document.getElementById("dest").value="";
+  const st=statusOf(id);
+  document.getElementById("status").textContent=st==="ok"?T[lang].ok:st==="no"?T[lang].no:T[lang].wait;
+  document.getElementById("status").className="status";
+  setBtns(false);
+  renderMails();
+}
+function applyLang(){
+  const c=T[lang], rtl=lang==="ar";
+  document.documentElement.lang=lang;
+  document.documentElement.dir=rtl?"rtl":"ltr";
+  document.getElementById("banner").textContent=c.banner;
+  document.getElementById("title").textContent=c.title;
+  document.getElementById("sub").textContent=c.sub;
+  document.getElementById("hInbox").textContent=c.inbox;
+  document.getElementById("hProp").textContent=c.prop;
+  document.getElementById("hDec").textContent=c.dec;
+  document.getElementById("hLog").textContent=c.audit;
+  document.getElementById("lSubj").textContent=c.subj;
+  document.getElementById("lBody").textContent=c.body;
+  document.getElementById("lDest").textContent=c.destEdit;
+  document.getElementById("lNote").textContent=c.note;
+  document.getElementById("analyze").textContent=c.classify;
+  document.getElementById("reset").textContent=c.reset;
+  document.getElementById("approve").textContent=c.approve;
+  document.getElementById("edit").textContent=c.edit;
+  document.getElementById("reject").textContent=c.reject;
+  document.getElementById("langAr").className=rtl?"primary":"";
+  document.getElementById("langFr").className=rtl?"":"primary";
+  const d=dossier();
+  if(statusOf(activeId)==="inbox"||statusOf(activeId)==="ready"){
+    document.getElementById("subj").value=d.subj[lang];
+    document.getElementById("body").value=d.body[lang];
+  }
+  document.getElementById("from").textContent=c.from+" : "+d.from[lang];
+  document.getElementById("hMail").textContent=c.mail+" "+d.ref;
+  renderMails();
+}
+document.getElementById("langAr").onclick=()=>{lang="ar";applyLang()};
+document.getElementById("langFr").onclick=()=>{lang="fr";applyLang()};
+document.getElementById("analyze").onclick=()=>{
+  const r=classify(document.getElementById("subj").value+" "+document.getElementById("body").value);
+  proposal=r;
+  const dest=r.dest[lang];
+  const c=T[lang];
+  document.getElementById("prop").innerHTML='<span class="pill">'+c.theme+" : "+r.theme[lang]+'</span><span class="pill">'+c.pri+" : "+r.p[lang]+'</span><span class="pill">'+c.score+" : "+r.score+'%</span><p class="dest"><b>'+dest+"</b></p>"+(r.matches&&r.matches.length?'<p class="matches">'+c.matches+" : "+r.matches.join(" · ")+"</p>":"")+'<p class="rule">'+c.rule+"</p>";
+  document.getElementById("dest").value=dest;
+  document.getElementById("status").textContent=c.ready;
+  document.getElementById("status").className="status ready";
+  queue[activeId]="ready";
+  setBtns(true);
+  addLog(dossier().ref+" — "+(lang==="ar"?"اقتراح: ":"Proposition : ")+dest);
+  renderMails();
+};
+document.getElementById("approve").onclick=()=>{
+  if(!proposal)return;
+  queue[activeId]="ok";
+  addLog(dossier().ref+" — "+(lang==="ar"?"اعتُمد — ":"Approuvé — ")+document.getElementById("dest").value);
+  document.getElementById("status").textContent=T[lang].ok;
+  document.getElementById("status").className="status ok";
+  setBtns(false);
+  renderMails();
+};
+document.getElementById("edit").onclick=()=>{
+  if(!proposal)return;
+  queue[activeId]="ok";
+  addLog(dossier().ref+" — "+(lang==="ar"?"عُدّل ثم اعتُمد — ":"Modifié — ")+document.getElementById("dest").value);
+  document.getElementById("status").textContent=T[lang].ok;
+  document.getElementById("status").className="status ok";
+  setBtns(false);
+  renderMails();
+};
+document.getElementById("reject").onclick=()=>{
+  queue[activeId]="no";
+  addLog(dossier().ref+" — "+(lang==="ar"?"رُفض. لم يخرج شيء.":"Rejeté. Rien n'est sorti."));
+  proposal=null; setBtns(false);
+  document.getElementById("status").textContent=T[lang].no;
+  document.getElementById("prop").textContent=T[lang].empty;
+  renderMails();
+};
+document.getElementById("reset").onclick=()=>{
+  queue[activeId]="inbox";
+  proposal=null;setBtns(false);
+  const d=dossier();
+  document.getElementById("subj").value=d.subj[lang];
+  document.getElementById("body").value=d.body[lang];
+  document.getElementById("prop").textContent=T[lang].empty;
+  document.getElementById("status").textContent=T[lang].wait;
+  document.getElementById("status").className="status";
+  addLog(d.ref+" — "+(lang==="ar"?"أُعيدت الجلسة.":"Session réinitialisée."));
+  renderMails();
+};
+applyLang();
+openDossier("youth");
+addLog(lang==="ar"?"فُتح المكتب — وضع العرض.":"Bureau ouvert — démonstration.");
+</script>
+</body>
+</html>
