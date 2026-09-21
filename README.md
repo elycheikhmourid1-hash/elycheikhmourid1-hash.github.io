@@ -4,4 +4,5 @@
 
 الأداة تقترح تصنيفاً فقط. القرار بشري. لا إرسال إلى أي إدارة.
 
-المستودع: https://github.com/elycheikhmourid1-hash/bureau-orientation
+- العرض: بعد تفعيل Pages يظهر على https://elycheikhmourid1-hash.github.io/
+- المصدر: https://github.com/elycheikhmourid1-hash/bureau-orientation
