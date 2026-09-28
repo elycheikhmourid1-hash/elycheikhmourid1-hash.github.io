@@ -68,7 +68,7 @@ To publish it for free, push the folder to **GitHub Pages** or Netlify, then set
 ```
 index.html, dashboard.html, book.html, share.html, mes-rendez-vous.html
 assets/css/app.css
-assets/js/i18n.js (AR/FR strings) · store.js (data, seed, actions + audit log, WhatsApp drafts) · ui.js · app.js · book.js · share.js · notify.js (owner e-mail via FormSubmit + patient tracker) · my.js (Mes rendez-vous)
+assets/js/i18n.js (AR/FR strings) · store.js (data, seed, actions + audit log, WhatsApp drafts) · ui.js · app.js · book.js · share.js · notify.js (owner e-mail via FormSubmit + patient tracker) · my.js (Mes rendez-vous) · fiber.js (fiber-optic header)
 assets/vendor/qrcode.js (MIT) · assets/fonts/Cairo-Variable.woff2 + OFL.txt · assets/img/logo.svg
 apps-script/Code.gs · apps-script/SETUP.md · apps-script/test/mock-test.js
 screenshots/ · demo-video.mp4

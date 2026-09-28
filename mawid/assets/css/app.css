@@ -76,12 +76,19 @@ p { margin: 0; }
 
 /* ---------- App bar ---------- */
 .appbar {
-  background: radial-gradient(120% 140% at 100% 0%, #117C86 0%, var(--brand-800) 45%, var(--brand-950) 100%);
+  background:
+    radial-gradient(90% 120% at 0% 100%, rgba(45, 212, 191, .16), transparent 46%),
+    radial-gradient(80% 110% at 100% 0%, rgba(129, 140, 248, .24), transparent 52%),
+    linear-gradient(165deg, #0c2340 0%, #071422 48%, #08182e 100%);
   color: #fff; padding: 14px 16px 18px; border-radius: 0 0 24px 24px; position: relative; overflow: hidden;
 }
 .appbar::after {
   content: ''; position: absolute; inset-inline-end: -40px; top: -60px; width: 180px; height: 180px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(244, 162, 89, .28), rgba(244, 162, 89, 0) 70%); pointer-events: none;
+  background: radial-gradient(circle, rgba(167, 139, 250, .22), rgba(167, 139, 250, 0) 70%); pointer-events: none;
+}
+.appbar .brand-name, .appbar .brand-sub, .appbar .clinic-line,
+.appbar .hero-title, .appbar .hero-sub, .appbar .tag {
+  text-shadow: 0 1px 2px rgba(2, 8, 20, .7);
 }
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .brand .logo { width: 40px; height: 40px; flex: none; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .25)); border-radius: 11px; }
@@ -608,5 +615,21 @@ p { margin: 0; }
 .my-empty .ico { width: 44px; height: 44px; color: var(--brand-500); margin-bottom: 8px; }
 .my-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 .my-actions .btn { flex: 1 1 160px; }
+/* ---------- Fiber-optic header (book, mes rendez-vous, dashboard) ---------- */
+.page-book .appbar { padding-top: 18px; padding-bottom: 28px; }
+.app > .appbar { padding-top: 10px; padding-bottom: 10px; }
+canvas.fiber {
+  position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  pointer-events: none; z-index: 0;
+}
+@media (min-width: 960px) {
+  .page-book .appbar > canvas.fiber { max-width: none; width: 100%; margin: 0; }
+  .page-book .appbar { padding-top: 22px; padding-bottom: 30px; }
+  .app > .appbar { padding: 10px 28px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  canvas.fiber { opacity: .85; }
+}
+@media print { canvas.fiber { display: none !important; } }
 @media (max-width: 380px) { .trk-label { font-size: 11px; } .trk-dot { width: 32px; height: 32px; } .trk-step::before { top: 15px; } }
 @media (max-width: 440px) { #myBtn .pill-lbl { display: none; } #myBtn { padding: 0 10px; } }
