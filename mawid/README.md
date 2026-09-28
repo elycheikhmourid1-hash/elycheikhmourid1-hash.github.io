@@ -37,7 +37,9 @@ To publish it for free, push the folder to **GitHub Pages** or Netlify, then set
 ### Pages
 | Page | What it shows |
 |---|---|
-| `book.html` | **Patient booking**: service → day (Friday closed) → time (taken slots greyed out) → name, phone (+222) and note, plus an optional deposit. Afterwards it shows *"طلبك قيد المراجعة، سيؤكد لك موظف العيادة قريباً"*, a reference number (`AM-xxxx`), a prefilled `wa.me` button to the clinic, and Bankily / Sedad / Masrvi deposit instructions with the reference. |
+| `book.html` | **Patient booking**: service → day (Friday closed) → time (taken slots greyed out) → name, phone (+222) and note, plus an optional deposit. Afterwards it shows *"طلبك قيد المراجعة، سيؤكد لك موظف العيادة قريباً"*, a booking number (`RDV-XXXXXX`), a status tracker, a prefilled `wa.me` button, and Bankily / Sedad / Masrvi deposit instructions with the reference. |
+| `book.html` → owner e-mail | **Every submitted booking e-mails the owner** (elycheikh@aicoredigital.com) through [FormSubmit.co](https://formsubmit.co) (AJAX, free, no backend, no secret key — the page uses FormSubmit's public alias of the inbox, activated for `…/mawid/book.html`). Subject: `Nouveau rendez-vous — Mawid / حجز جديد · RDV-XXXXXX`; body: booking number, patient name, phone, service, doctor, clinic, date and time, note, deposit, language and timestamp. A hidden honeypot field blocks simple bots. If the e-mail call fails, the confirmation still shows, with a warning and a prefilled **إرسال عبر واتساب / Envoyer via WhatsApp** button to +1 804 485 3384. Code: `assets/js/notify.js`. |
+| `mes-rendez-vous.html` | **مواعيدي / Mes rendez-vous**: the patient's own bookings saved on this phone (`localStorage`, key `mawid_my_bookings_v1`, survives reloads and the daily demo reseed). Each booking shows its number (`RDV-XXXXXX`), doctor/specialty, clinic, date and time and a 4-step tracker: **التخطيط / Planification → الحجز / Réservation → الدفع / Paiement → الإيصال / Reçu**, with step 1 done and *جارٍ تخطيط الموعد… / Planification du RDV en cours…*. **Status does not update remotely yet** (no backend); the clinic confirms on WhatsApp. |
 | `index.html` | **Receptionist dashboard.** Demo login: pick Mariem, Sidi or Dr Ahmed (no password). Tabs: **طلبات جديدة / مؤكدة / مرفوضة-ملغاة / اليوم**. Each request can be **Confirmed**, **Refused** (with a reason) or given **another proposed time**. Every action records the staff name and time, then opens a **WhatsApp draft** (Arabic or French, editable) that the staff sends with one tap. Deposits show *بانتظار الدفع* until someone verifies them. Attendance is marked *حضر / لم يحضر*. |
 | `index.html#/reminders` | **Reminders**: tomorrow's (next open day's) confirmed appointments, each with its drafted message, a one-tap `wa.me` button and **Mark sent**. **Send all** walks through them one by one: open WhatsApp, then "Sent – next". |
 | `index.html#/audit` | **Audit log (سجل المراجعة)**: a chronological list of who did what and when (created, confirmed, refused, proposed, WhatsApp opened, reminder sent, payment verified, attended, no-show). You can filter by action and staff, search by name or reference, and export to CSV. It is the proof that a human stays in the loop (it shows "0 automatic sends"). |
@@ -64,9 +66,9 @@ To publish it for free, push the folder to **GitHub Pages** or Netlify, then set
 
 ### Files
 ```
-index.html, dashboard.html, book.html, share.html
+index.html, dashboard.html, book.html, share.html, mes-rendez-vous.html
 assets/css/app.css
-assets/js/i18n.js (AR/FR strings) · store.js (data, seed, actions + audit log, WhatsApp drafts) · ui.js · app.js · book.js · share.js
+assets/js/i18n.js (AR/FR strings) · store.js (data, seed, actions + audit log, WhatsApp drafts) · ui.js · app.js · book.js · share.js · notify.js (owner e-mail via FormSubmit + patient tracker) · my.js (Mes rendez-vous) · fiber.js (fiber-optic header)
 assets/vendor/qrcode.js (MIT) · assets/fonts/Cairo-Variable.woff2 + OFL.txt · assets/img/logo.svg
 apps-script/Code.gs · apps-script/SETUP.md · apps-script/test/mock-test.js
 screenshots/ · demo-video.mp4
