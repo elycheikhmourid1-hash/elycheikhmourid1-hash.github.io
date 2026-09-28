@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="fr" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#073B4C">
+  <title>Observatoire des marchés publics — démonstration · AICore Digital</title>
+  <meta name="description" content="Démonstration indépendante d'AICore Digital : indicateurs agrégés calculés à partir des avis publiés sur marchespublics.gov.mr, et proposition de pilote sans frais pour la supervision automatisée sous contrôle humain.">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/Cairo-Variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body>
+<div class="demo-banner" role="note"><span class="dot"></span><span data-i18n="banner">Démonstration indépendante — ce n'est pas un produit officiel de l'ARMP · Données publiques de marchespublics.gov.mr</span></div>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="topbar">
+      <a class="brand" href="#top" id="top">
+        <img src="assets/img/logo.svg" alt="" width="42" height="42">
+        <div><div class="brand-name">AICore <span data-i18n="brand_prod">Marchés</span></div><div class="brand-sub" data-i18n="brand_sub">Supervision automatisée · sous contrôle humain</div></div>
+      </a>
+      <nav class="nav" aria-label="Navigation">
+        <a href="#tableau" class="hide-m" data-i18n="nav_dash">Tableau de bord</a>
+        <a href="#capacites" class="hide-m" data-i18n="nav_cap">Capacités</a>
+        <a href="#pilote" class="hide-m" data-i18n="nav_pilot">Pilote</a>
+        <a href="#fiche" class="hide-m" data-i18n="nav_cs">Fiche de capacités</a>
+        <button class="pill-btn" id="langBtn" type="button" aria-label="Changer de langue"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg><span id="langLabel">العربية</span></button>
+      </nav>
+    </div>
+
+    <div class="hero-body">
+      <div>
+        <span class="eyebrow" data-i18n="eyebrow">Démonstration · AICore Digital</span>
+        <h1><span data-i18n="h1">Observatoire des marchés publics — démonstration</span><span class="sub" data-i18n="h1_sub">Chaque avis publié, lu, structuré et mesuré — l'analyste reste décisionnaire</span></h1>
+        <p class="lead" data-i18n="lead">Un aperçu de ce que la supervision automatisée peut apporter à la régulation : lecture de tous les avis publiés, y compris les PDF scannés en arabe et en français, extraction des données clés et indicateurs de transparence mis à jour chaque jour.</p>
+        <div class="hero-note">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          <span data-i18n="hero_note">Construit par AICore Digital à partir des données publiées sur <b>marchespublics.gov.mr</b>. Instantané du <b>{snapshot_date}</b>. Démonstration indépendante : ce n'est pas un produit officiel de l'ARMP et elle n'engage pas l'ARMP.</span>
+        </div>
+        <div class="hero-cta">
+          <a class="btn btn-accent" href="#tableau" data-i18n="cta_dash">Voir le tableau de bord</a>
+          <a class="btn btn-ghost" href="#pilote" data-i18n="cta_pilot">Pilote de 4 semaines, sans frais</a>
+        </div>
+      </div>
+      <div class="hero-kpis" aria-label="Chiffres clés">
+        <div class="hk"><b class="num" data-v="n_notices"></b><span data-i18n="hk1">avis publiés en 13 semaines</span></div>
+        <div class="hk"><b class="num" data-v="n_procedures"></b><span data-i18n="hk2">procédures distinctes</span></div>
+        <div class="hk"><b class="num" data-v="n_authorities"></b><span data-i18n="hk3">autorités contractantes actives</span></div>
+        <div class="hk accent"><b class="num" data-v="pct_image_only"></b><span data-i18n="hk4">des PDF vérifiés sont des images scannées</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- ========== DASHBOARD ========== -->
+<section class="block" id="tableau">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-kicker" data-i18n="dash_kicker">Tableau de bord · données réelles</div>
+      <h2 data-i18n="dash_title">Ce que disent les avis publiés</h2>
+      <p data-i18n="dash_intro">Indicateurs agrégés et neutres, calculés automatiquement à partir des avis mis en ligne sur le portail national. Ils décrivent l'activité et la qualité des données publiées ; ils ne constituent en aucun cas une appréciation de la conformité d'une autorité ou d'une procédure.</p>
+    </div>
+    <div class="dash-meta">
+      <span class="chip live" data-i18n="chip_snap">Instantané du {snapshot_date}</span>
+      <span class="chip" data-i18n="chip_win">Fenêtre : {win_start} → {win_end} (13 semaines)</span>
+      <span class="chip" data-i18n="chip_src">Source : API publique de marchespublics.gov.mr</span>
+    </div>
+
+    <div class="grid g4">
+      <div class="card kpi"><div class="v num" data-v="n_notices"></div><div class="l" data-i18n="k1">Avis publiés</div><div class="d" data-i18n="k1d">sur {portal_total} avis en ligne depuis le {portal_first}</div></div>
+      <div class="card kpi"><div class="v num" data-v="per_week_median"></div><div class="l" data-i18n="k2">Avis par semaine (médiane)</div><div class="d" data-i18n="k2d">13 semaines complètes</div></div>
+      <div class="card kpi"><div class="v num" data-v="n_calls"></div><div class="l" data-i18n="k3">Avis d'appel à la concurrence</div><div class="d" data-i18n="k3d">AAO, AMI et sélections initiales</div></div>
+      <div class="card kpi"><div class="v num" data-v="top10_share_pct"></div><div class="l" data-i18n="k4">Part des 10 autorités les plus actives</div><div class="d" data-i18n="k4d">dans le volume de publication</div></div>
+    </div>
+
+    <div class="grid g3" style="margin-top:16px">
+      <div class="card span2">
+        <h3 data-i18n="c_week">Avis publiés par semaine</h3>
+        <div class="cap" data-i18n="c_week_cap">Semaines du lundi au dimanche, date de mise en ligne (UTC)</div>
+        <div class="chart" id="chWeek"></div>
+      </div>
+      <div class="card">
+        <h3 data-i18n="c_stage">Répartition par étape</h3>
+        <div class="cap" data-i18n="c_stage_cap">Type de document publié</div>
+        <div class="chart donut-wrap" id="chStage"></div>
+      </div>
+      <div class="card">
+        <h3 data-i18n="c_type">Nature des marchés</h3>
+        <div class="cap" data-i18n="c_type_cap">Part des avis par type de marché</div>
+        <div class="chart" id="chType"></div>
+      </div>
+      <div class="card">
+        <h3 data-i18n="c_proc">Modes de passation</h3>
+        <div class="cap" data-i18n="c_proc_cap">Avis par mode de passation (6 premiers)</div>
+        <div class="chart" id="chProc"></div>
+      </div>
+      <div class="card">
+        <h3 data-i18n="c_fund">Sources de financement</h3>
+        <div class="cap" data-i18n="c_fund_cap">Procédures lancées dans la fenêtre, d'après le plan de passation associé ({fund_cov} sur {fund_total})</div>
+        <div class="chart" id="chFund"></div>
+        <div class="cap" style="margin-top:14px" data-i18n="c_fund2_cap">Partenaires cités comme financeurs dans le texte des avis d'appel ({ft_n} avis lisibles, un décompte par avis et par partenaire)</div>
+        <div class="chart" id="chFund2"></div>
+        <div class="cap small" data-i18n="c_fund_note">Le plan de passation indique souvent « financement extérieur » sans préciser le partenaire : un champ structuré améliorerait le suivi par source.</div>
+      </div>
+    </div>
+
+    <div class="grid g3" style="margin-top:16px">
+      <div class="card">
+        <h3 data-i18n="c_read">Lisibilité machine des PDF</h3>
+        <div class="cap" data-i18n="c_read_cap">{pdf_checked} PDF analysés sur {n_notices} avis</div>
+        <div class="meter" id="readMeter"></div>
+        <div class="legend" id="readLegend"></div>
+        <div class="opp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg><span data-i18n="opp_read"><b>Opportunité :</b> la majorité des avis sont des images ; l'OCR arabe/français les rend consultables, comparables et exportables sans changer les pratiques de publication.</span></div>
+      </div>
+      <div class="card">
+        <h3 data-i18n="c_dl">Dates limites des appels</h3>
+        <div class="cap" data-i18n="c_dl_cap">Extraction automatique sur {n_calls} avis d'appel</div>
+        <div id="dlStats"></div>
+        <div class="opp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg><span data-i18n="opp_dl"><b>Opportunité :</b> un champ structuré « date limite » à la mise en ligne fiabiliserait le suivi des délais. Mesure faite à partir de la date de mise en ligne sur le portail, qui peut différer de la première publication officielle.</span></div>
+      </div>
+      <div class="card">
+        <h3 data-i18n="c_chain">Traçabilité de bout en bout</h3>
+        <div class="cap" data-i18n="c_chain_cap">Procédures ayant une attribution provisoire publiée dans la fenêtre : {chain_total}</div>
+        <div class="timeline" id="chainTl"></div>
+        <div id="chainStats" style="margin-top:10px"></div>
+        <div class="opp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg><span data-i18n="opp_chain"><b>Opportunité :</b> relier systématiquement chaque avis à sa procédure (appel, ouverture, attribution) permet de mesurer les délais réels et d'alimenter un export open data.</span></div>
+      </div>
+    </div>
+
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card">
+        <h3 data-i18n="c_auth">Autorités contractantes les plus actives</h3>
+        <div class="cap" data-i18n="c_auth_cap">Nombre d'avis publiés — indicateur de volume uniquement, sans appréciation</div>
+        <div class="chart" id="chAuth"></div>
+      </div>
+      <div class="card">
+        <h3 data-i18n="c_dq">Qualité des données publiées</h3>
+        <div class="cap" data-i18n="c_dq_cap">Points d'amélioration détectables automatiquement</div>
+        <div id="dqStats"></div>
+        <div class="opp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg><span data-i18n="opp_dq"><b>Lecture :</b> ces signaux sont des pistes de qualité des données à vérifier par un analyste — pas des constats.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CAPABILITIES ========== -->
+<section class="block alt" id="capacites">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-kicker" data-i18n="cap_kicker">Capacités</div>
+      <h2 data-i18n="cap_title">Ce que la supervision automatisée apporte</h2>
+      <p data-i18n="cap_intro">Sept cas d'usage pour un régulateur. Dans chacun, la machine prépare et signale ; une personne habilitée de l'ARMP décide.</p>
+    </div>
+    <div class="grid g3" id="usecases">
+      <div class="card usecase"><div class="uc-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg></div>
+        <h3 data-i18n="uc1_t">Lecture de chaque avis, y compris les scans</h3>
+        <p data-i18n="uc1_p">Collecte quotidienne de tous les avis publiés et reconnaissance de texte (OCR) arabe et français sur les PDF scannés, avec un score de confiance par champ.</p>
+        <div class="human"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg><span data-i18n="uc1_h"><b>Décision humaine :</b> l'analyste valide les lectures à faible confiance.</span></div></div>
+      <div class="card usecase"><div class="uc-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+        <h3 data-i18n="uc2_t">Extraction en données structurées</h3>
+        <p data-i18n="uc2_p">Dates limites, montants, attributaires, lots, sources de financement et références transformés en tableau exploitable, relié à chaque procédure.</p>
+        <div class="human"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg><span data-i18n="uc2_h"><b>Décision humaine :</b> contrôle par échantillon ; chaque correction est tracée.</span></div></div>
+      <div class="card usecase"><div class="uc-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></div>
+        <h3 data-i18n="uc3_t">Contrôles de conformité aux règles de publication</h3>
+        <p data-i18n="uc3_p">Vérification des délais de remise des offres, de la publication des décisions et des délais d'attente, paramétrés sur les textes en vigueur (par exemple le délai minimal de 7 jours entre l'attribution provisoire et la signature, art. 41 de la loi n° 2021-024).</p>
+        <div class="human"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg><span data-i18n="uc3_h"><b>Décision humaine :</b> le système signale un écart possible ; l'analyste qualifie.</span></div></div>
+      <div class="card usecase"><div class="uc-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+        <h3 data-i18n="uc4_t">Alertes d'incohérence</h3>
+        <p data-i18n="uc4_p">Date limite absente, additif publié après la date limite, étapes dans un ordre inattendu, publication en double : chaque cas rejoint une file de revue.</p>
+        <div class="human"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg><span data-i18n="uc4_h"><b>Décision humaine :</b> aucune alerte n'est publiée ni transmise sans validation.</span></div></div>
+      <div class="card usecase"><div class="uc-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg></div>
+        <h3 data-i18n="uc5_t">Tri et synthèse bilingue des recours</h3>
+        <p data-i18n="uc5_p">Classement des recours et plaintes par objet et par échéance, fiche de synthèse en arabe et en français renvoyant aux pièces du dossier.</p>
+        <div class="human"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg><span data-i18n="uc5_h"><b>Décision humaine :</b> la synthèse est une aide ; l'instruction et la décision restent à l'ARMP.</span></div></div>
+      <div class="card usecase"><div class="uc-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></div>
+        <h3 data-i18n="uc6_t">Export open data au standard OCDS</h3>
+        <p data-i18n="uc6_p">Publication des données de passation selon l'Open Contracting Data Standard (OCDS) : appel, attribution, contrat, réutilisables par la presse, la société civile et les partenaires.</p>
+        <div class="human"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg><span data-i18n="uc6_h"><b>Décision humaine :</b> chaque lot de données est validé avant publication.</span></div></div>
+      <div class="card usecase"><div class="uc-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></div>
+        <h3 data-i18n="uc7_t">Indicateurs de type MAPS</h3>
+        <p data-i18n="uc7_p">Tableaux de bord alignés sur la méthodologie d'évaluation des systèmes de passation des marchés (MAPS) : délais, concurrence, part des procédures ouvertes, publication.</p>
+        <div class="human"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg><span data-i18n="uc7_h"><b>Décision humaine :</b> l'interprétation et les recommandations appartiennent à l'ARMP.</span></div></div>
+      <div class="card usecase" style="background:var(--brand-50)">
+        <h3 data-i18n="uc8_t">Déjà démontré ici</h3>
+        <p data-i18n="uc8_p">Les indicateurs ci-dessus ont été produits par ce même pipeline : collecte des {portal_total} avis en ligne, lecture des PDF, OCR des scans, regroupement par procédure. Aucune saisie manuelle.</p>
+        <a class="btn btn-primary" href="#methode" data-i18n="uc8_b">Voir la méthode</a>
+      </div>
+    </div>
+    <div class="principles">
+      <div class="principle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg><div><b data-i18n="p1_t">Le système signale, l'analyste décide</b><span data-i18n="p1_p">Aucune décision automatique.</span></div></div>
+      <div class="principle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 15l2 2 4-4"/></svg><div><b data-i18n="p2_t">Chaque action journalisée</b><span data-i18n="p2_p">Qui, quoi, quand : piste d'audit complète.</span></div></div>
+      <div class="principle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="8" rx="2"/><rect x="2" y="13" width="20" height="8" rx="2"/><path d="M6 7h.01M6 17h.01"/></svg><div><b data-i18n="p3_t">Hébergé chez l'ARMP ou l'État</b><span data-i18n="p3_p">Déploiement sur serveurs publics mauritaniens.</span></div></div>
+      <div class="principle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><div><b data-i18n="p4_t">Aucun entraînement de modèles</b><span data-i18n="p4_p">Les données de l'ARMP ne servent jamais à entraîner des modèles.</span></div></div>
+    </div>
+    <p class="legal" data-i18n="legal">Référence vérifiée : loi n° 2021-024 du 29 décembre 2021 portant Code des marchés publics (art. 40 publication des décisions, art. 41 délai de 7 jours avant signature, art. 46 avis d'attribution définitive). Les délais minimaux de remise des offres étant fixés par voie réglementaire, les règles de contrôle seraient paramétrées à partir des textes d'application communiqués par l'ARMP.</p>
+  </div>
+</section>
+
+<!-- ========== PILOT ========== -->
+<section class="block" id="pilote">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-kicker" data-i18n="pil_kicker">Proposition</div>
+      <h2 data-i18n="pil_title">Un pilote de 4 semaines, sans frais et sans risque</h2>
+      <p data-i18n="pil_intro">Uniquement sur des données déjà publiques, sans aucun accès aux systèmes internes de l'ARMP, puis une revue conjointe pour décider de la suite.</p>
+    </div>
+    <div class="pilot-weeks">
+      <div class="card week"><div class="wn" data-i18n="w1_n">Semaine 1</div><h3 data-i18n="w1_t">Cadrage</h3><p data-i18n="w1_p">Choix, avec l'équipe ARMP, des indicateurs prioritaires et des règles de publication à contrôler ; collecte complète des avis publics.</p></div>
+      <div class="card week"><div class="wn" data-i18n="w2_n">Semaine 2</div><h3 data-i18n="w2_t">Extraction et qualité</h3><p data-i18n="w2_p">OCR arabe/français, extraction des dates et montants ; mesure de la précision sur un échantillon vérifié par un analyste ARMP.</p></div>
+      <div class="card week"><div class="wn" data-i18n="w3_n">Semaine 3</div><h3 data-i18n="w3_t">Alertes et export</h3><p data-i18n="w3_p">Prototype de file d'alertes de conformité à revoir par l'analyste ; échantillon d'export OCDS.</p></div>
+      <div class="card week"><div class="wn" data-i18n="w4_n">Semaine 4</div><h3 data-i18n="w4_t">Revue conjointe</h3><p data-i18n="w4_p">Présentation des résultats mesurés, limites constatées et recommandations ; décision de l'ARMP sur la suite.</p></div>
+    </div>
+    <div class="deliv">
+      <div class="card"><div class="uc-icon">1</div><div><h3 data-i18n="d1_t">Rapport hebdomadaire d'indicateurs</h3><p class="small muted" data-i18n="d1_p">Volumes, délais, lisibilité, qualité des données — en français et en arabe.</p></div></div>
+      <div class="card"><div class="uc-icon">2</div><div><h3 data-i18n="d2_t">Prototype d'alertes de conformité</h3><p class="small muted" data-i18n="d2_p">File de revue avec justification de chaque alerte et journal des décisions.</p></div></div>
+      <div class="card"><div class="uc-icon">3</div><div><h3 data-i18n="d3_t">Échantillon d'export OCDS</h3><p class="small muted" data-i18n="d3_p">Fichiers JSON/CSV et dictionnaire de données documenté.</p></div></div>
+    </div>
+    <div class="guar">
+      <span data-i18n="g1">✓ Sans frais</span><span data-i18n="g2">✓ Données publiques uniquement</span><span data-i18n="g3">✓ Zéro accès aux systèmes internes</span><span data-i18n="g4">✓ Résultats et données remis à l'ARMP</span><span data-i18n="g5">✓ Revue conjointe à la fin</span>
+    </div>
+    <div class="note-box" data-i18n="pil_note"><b>Complément, pas concurrence.</b> Le pilote s'appuie sur le portail existant et vient en appui des travaux en cours sur la passation électronique (e-procurement) menés dans le cadre du programme WARDIP, sans les recouper.</div>
+  </div>
+</section>
+
+<!-- ========== CAPABILITY STATEMENT ========== -->
+<section class="block alt" id="fiche">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-kicker" data-i18n="cs_kicker">Capability Statement</div>
+      <h2 data-i18n="cs_title">Fiche de capacités</h2>
+    </div>
+    <div class="cs">
+      <div class="cs-head">
+        <div><div class="t">Capability Statement</div><h3>AICore Digital LLC</h3><div class="ar" lang="ar" dir="rtl">أيكور ديجيتال — الأتمتة تحت الإشراف البشري</div></div>
+        <img src="assets/img/logo.svg" alt="" width="54" height="54" style="border-radius:14px">
+      </div>
+      <div class="cs-body">
+        <div class="cs-col">
+          <h4 data-i18n="cs_h1">Présentation</h4>
+          <p data-i18n="cs_p1">AICore Digital LLC est une société américaine basée à Richmond (Virginie, États-Unis), spécialisée dans l'automatisation supervisée : des systèmes qui lisent, structurent et vérifient les documents administratifs, en laissant chaque décision à un agent habilité. Fondée par Ely Cheikh Mourid, d'origine mauritanienne.</p>
+          <h4 data-i18n="cs_h2">Compétences clés</h4>
+          <ul>
+            <li data-i18n="cs_c1">Lecture automatisée de documents : PDF natifs et scannés, OCR arabe et français</li>
+            <li data-i18n="cs_c2">Extraction de données structurées et contrôles de cohérence</li>
+            <li data-i18n="cs_c3">Tableaux de bord et indicateurs de performance</li>
+            <li data-i18n="cs_c4">Données ouvertes : OCDS, JSON, CSV</li>
+            <li data-i18n="cs_c5">Circuits de revue humaine avec journal d'audit</li>
+            <li data-i18n="cs_c6">Synthèses bilingues arabe / français</li>
+          </ul>
+        </div>
+        <div class="cs-col">
+          <h4 data-i18n="cs_h3">Éléments différenciants</h4>
+          <ul>
+            <li data-i18n="cs_d1">Bilingue arabe / français de bout en bout, y compris l'OCR des documents scannés</li>
+            <li data-i18n="cs_d2">Gouvernance « humain dans la boucle » : le système signale, l'agent décide, tout est journalisé</li>
+            <li data-i18n="cs_d3">Déploiement auto-hébergé sur les serveurs de l'administration ; aucune donnée utilisée pour entraîner des modèles</li>
+            <li data-i18n="cs_d4">Appui local à Nouakchott avec un partenaire</li>
+          </ul>
+          <h4 data-i18n="cs_h4">Mode d'engagement</h4>
+          <p data-i18n="cs_p4">Pilote sans frais sur données publiques, livrables mesurables, revue conjointe avant toute suite.</p>
+        </div>
+      </div>
+      <div class="cs-contact">
+        <span>Ely Cheikh Mourid — <span data-i18n="cs_role">Fondateur et CEO</span></span>
+        <a class="ltr" href="mailto:elycheikh@aicoredigital.com">elycheikh@aicoredigital.com</a>
+        <a class="ltr" href="tel:+18044853384">+1 (804) 485-3384</a>
+        <a class="ltr" href="https://aicoredigital.com" rel="noopener">aicoredigital.com</a>
+      </div>
+    </div>
+    <div class="cs-actions">
+      <a class="btn btn-primary" href="aicore-capability-statement.pdf" download data-i18n="cs_dl">Télécharger la fiche (PDF, 1 page)</a>
+      <a class="btn btn-line" href="capability-statement.html" data-i18n="cs_print">Version imprimable</a>
+    </div>
+  </div>
+</section>
+
+<!-- ========== METHOD ========== -->
+<section class="block" id="methode">
+  <div class="wrap method">
+    <div class="sec-head">
+      <div class="sec-kicker" data-i18n="m_kicker">Méthodologie et sources</div>
+      <h2 data-i18n="m_title">Comment ces chiffres ont été produits</h2>
+    </div>
+    <div class="card" data-i18n="m_body">
+      <ol>
+        <li><b>Source.</b> Données publiées sur le portail national <a href="https://marchespublics.gov.mr" rel="noopener">marchespublics.gov.mr</a>, lues via son interface publique (liste des avis validés). Instantané pris le {snapshot_date} : {portal_total} avis en ligne, le plus ancien daté du {portal_first}.</li>
+        <li><b>Fenêtre d'analyse.</b> Du {win_start} au {win_end} inclus (13 semaines complètes), selon la date de mise en ligne (UTC) : {n_notices} avis, {n_procedures} procédures, {n_authorities} autorités contractantes.</li>
+        <li><b>Documents.</b> {pdf_checked} PDF téléchargés et analysés ; un PDF est considéré « lisible par machine » si l'extraction de texte (pdftotext) renvoie au moins 200 caractères. Les avis d'appel scannés ont été passés à l'OCR Tesseract (français + arabe).</li>
+        <li><b>Dates limites.</b> Repérées automatiquement autour d'expressions telles que « date limite » ou « au plus tard » ; délai calculé depuis la date de mise en ligne sur le portail.</li>
+        <li><b>Financement.</b> Sources rattachées à la ligne du plan de passation de chaque procédure lancée dans la fenêtre ({fund_cov} procédures documentées sur {fund_total}). En complément, partenaires nommés dans un contexte de financement (« financé par », « a obtenu un crédit/don »…) dans le texte ou l'OCR des avis d'appel ({ft_n} avis lisibles), hors mentions d'expérience ou de références.</li>
+        <li><b>Procédures.</b> Avis regroupés par ligne du plan de passation sur l'historique complet du portail ; médianes calculées sur les procédures dont les étapes sont toutes publiées.</li>
+      </ol>
+      <p class="small muted"><b>Limites.</b> Méthodes heuristiques ; l'OCR peut commettre des erreurs ; les indicateurs sont descriptifs et ne constituent pas une appréciation de conformité. Chaque chiffre est recalculable à partir de l'instantané et des scripts conservés par AICore Digital, disponibles sur demande.</p>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <div data-i18n="foot1">© 2026 AICore Digital LLC · Démonstration indépendante, non affiliée à l'ARMP.</div>
+    <div><a href="https://aicoredigital.com" rel="noopener">aicoredigital.com</a> · <a class="ltr" href="mailto:elycheikh@aicoredigital.com">elycheikh@aicoredigital.com</a></div>
+  </div>
+</footer>
+<noscript><p style="padding:16px;text-align:center">Les graphiques nécessitent JavaScript · الرسوم البيانية تتطلب تفعيل JavaScript</p></noscript>
+<script src="assets/data/obs.js"></script>
+<script src="assets/js/i18n.js"></script>
+<script src="assets/js/site.js"></script>
+</body>
+</html>
