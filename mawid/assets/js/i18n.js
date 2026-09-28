@@ -199,7 +199,7 @@
     },
 
     fr: {
-      product: 'AICore Mawʿid',
+      product: 'AICore Maw‘id',
       subtitle: 'Le secrétariat WhatsApp supervisé',
       tagline: 'Le système organise, votre équipe décide.',
       footer: 'by AICore Digital · aicoredigital.com',

@@ -1,4 +1,4 @@
-/* AICore Mawʿid — receptionist dashboard (index.html)
+/* AICore Mawʿid — demo receptionist dashboard (demo.html, fictional data)
  * Human-in-the-loop: the system drafts, a named staff member decides and sends.
  * DEMO: localStorage only, fictional data, no WhatsApp API — wa.me links only. */
 (function () {
@@ -573,7 +573,7 @@
     var seg = [[s.conf, 'var(--brand-600)'], [s.pend, 'var(--accent)'], [s.refd, '#E88B8A']], off = 0;
     var donut = '<svg class="donut" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="none" stroke="var(--line)" stroke-width="14"/>' + seg.map(function (x) {
       var len = x[0] / tot * C; var c = '<circle cx="50" cy="50" r="42" fill="none" stroke="' + x[1] + '" stroke-width="14" stroke-dasharray="' + len + ' ' + (C - len) + '" stroke-dashoffset="' + (-off) + '" transform="rotate(-90 50 50)"/>'; off += len; return c;
-    }).join('') + '<text x="50" y="47" text-anchor="middle" font-size="20" font-weight="800" fill="#073B4C" font-family="Cairo">' + Math.round(s.conf / tot * 100) + '%</text><text x="50" y="64" text-anchor="middle" font-size="10" fill="#62777D" font-family="Cairo">' + t('k_confirmed') + '</text></svg>';
+    }).join('') + '<text x="50" y="47" text-anchor="middle" font-size="20" font-weight="800" fill="#eeeef6" font-family="Space Grotesk, Inter">' + Math.round(s.conf / tot * 100) + '%</text><text x="50" y="64" text-anchor="middle" font-size="10" fill="#9b9db4" font-family="Inter, Tajawal">' + t('k_confirmed') + '</text></svg>';
     v.innerHTML = '<div class="page-head"><div><h2>' + t('rep_title') + '</h2><p>' + t('rep_sub') + '</p></div></div>' +
       '<div class="kpis">' +
         kpi('inbox', t('k_requests'), s.req, t('k_pending') + ': ' + s.pend) +

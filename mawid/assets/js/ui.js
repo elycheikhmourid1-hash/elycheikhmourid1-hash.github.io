@@ -4,6 +4,7 @@
   var P = {
     check: '<path d="M20 6 9 17l-5-5"/>',
     x: '<path d="M18 6 6 18M6 6l12 12"/>',
+    trash: '<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/>',
     clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
     calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
     calcheck: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/>',
@@ -50,14 +51,25 @@
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; });
   }
-  var LOGO = '<svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1BA3A6"/><stop offset="1" stop-color="#0A5C6E"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#lg)"/><rect x="14" y="17" width="36" height="32" rx="7" fill="none" stroke="#fff" stroke-width="3.5"/><path d="M14 27h36" stroke="#fff" stroke-width="3.5"/><path d="M23 12v9M41 12v9" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/><circle cx="46" cy="46" r="11" fill="#F4A259" stroke="#073B4C" stroke-width="2.5"/><path d="m41 46 3.5 3.5L51 43" fill="none" stroke="#073B4C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  // AICore-style hexagon mark (gradient purple → pink → cyan) with a calendar check
+  var LOGO = '<svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><defs>' +
+    '<linearGradient id="mwS" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#a855f7"/><stop offset=".5" stop-color="#ec4899"/><stop offset="1" stop-color="#22d3ee"/></linearGradient>' +
+    '<radialGradient id="mwC" cx="50%" cy="42%" r="62%"><stop offset="0" stop-color="#2b1850"/><stop offset="1" stop-color="#0c0a18"/></radialGradient></defs>' +
+    '<polygon points="32,3.5 57,18 57,46 32,60.5 7,46 7,18" fill="url(#mwC)" stroke="url(#mwS)" stroke-width="3" stroke-linejoin="round"/>' +
+    '<rect x="19" y="22" width="26" height="22" rx="4.5" fill="none" stroke="#ede4ff" stroke-width="2.6"/><path d="M19 29.5h26" stroke="#ede4ff" stroke-width="2.6"/>' +
+    '<path d="M25 18v7M39 18v7" stroke="#ede4ff" stroke-width="2.6" stroke-linecap="round"/>' +
+    '<path d="m26.2 36.4 3.8 3.6 7.6-7.4" fill="none" stroke="#22d3ee" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '<circle cx="32" cy="3.5" r="2.8" fill="#22d3ee"/></svg>';
 
   function demoBanner() {
     var el = document.createElement('div');
     el.className = 'demo-banner';
     el.setAttribute('role', 'note');
-    el.innerHTML = '<span class="dot"></span><span data-i18n="demoBanner">' + t('demoBanner') + '</span><span class="sep">·</span><span class="alt">' +
-      (I18N.lang === 'ar' ? 'Démo – données fictives' : 'نموذج تجريبي – بيانات وهمية') + '</span>';
+    var live = !!(global.API && API.enabled && I18N.dict.ar.banner_live);
+    var k = live ? 'banner_live' : 'demoBanner';
+    if (live) el.className += ' live';
+    el.innerHTML = '<span class="dot"></span><span>' + t(k) + '</span><span class="sep">·</span><span class="alt">' +
+      I18N.t(k, null, I18N.lang === 'ar' ? 'fr' : 'ar') + '</span>';
     document.body.insertBefore(el, document.body.firstChild);
   }
   function refreshBanner() {

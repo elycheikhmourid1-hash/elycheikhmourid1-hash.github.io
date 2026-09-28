@@ -1,15 +1,39 @@
-/* AICore Mawʿid — patient booking page (book.html) */
+/* AICore Mawʿid — patient booking page (book.html)
+ * Live mode (config.js set): the booking is saved in Supabase through create_booking(); the patient
+ * keeps a local copy + secret token to follow its status. Offline/demo mode: localStorage only. */
 (function () {
   'use strict';
   Store.load();
   var S = Store, $ = function (id) { return document.getElementById(id); };
+  var LIVE = !!(window.API && API.enabled);
   var sel = { service: null, date: null, time: null };
   var lastBooking = null;
+  var submitting = false;
+  var taken = null; // live mode: { 'YYYY-MM-DD HH:MM': 1 } from the server (null = unknown)
+
+  /* Slots: live mode uses the server's taken slots (no names); demo mode uses the local demo data. */
+  function slotsFor(date) {
+    if (!LIVE) return S.slotsFor(date);
+    var now = new Date();
+    return S.SLOTS.map(function (sl) {
+      return { time: sl, period: S.MORNING.indexOf(sl) >= 0 ? 'm' : 'e', taken: !!(taken && taken[date + ' ' + sl]), past: S.at(date, sl) <= now };
+    });
+  }
+  function loadTaken() {
+    if (!LIVE) return Promise.resolve();
+    var from = S.todayKey(), to = S.addDays(from, 14);
+    return API.takenSlots(from, to).then(function (rows) {
+      taken = {};
+      (rows || []).forEach(function (r) { taken[r.appt_date + ' ' + r.appt_time] = 1; });
+      if (sel.date && sel.time && taken[sel.date + ' ' + sel.time]) sel.time = null;
+      if (!lastBooking) { renderDays(); renderSlots(); renderSummary(); }
+    }, function () { /* offline: keep every slot open; the server re-checks on save */ });
+  }
 
   function firstAvailableDay() {
     var d = S.todayKey();
     for (var i = 0; i < 14; i++) {
-      if (!S.isClosed(d) && S.slotsFor(d).some(function (s) { return !s.taken && !s.past; })) return d;
+      if (!S.isClosed(d) && slotsFor(d).some(function (s) { return !s.taken && !s.past; })) return d;
       d = S.addDays(d, 1);
     }
     return null;
@@ -50,7 +74,7 @@
   function renderSlots() {
     var w = $('slotsWrap');
     if (!sel.date) { w.innerHTML = '<p class="muted small">' + t('pick_date_first') + '</p>'; return; }
-    var slots = S.slotsFor(sel.date);
+    var slots = slotsFor(sel.date);
     w.innerHTML = '';
     if (!slots.some(function (s) { return !s.taken && !s.past; })) { w.innerHTML = '<p class="muted small">' + t('no_slots') + '</p>'; }
     function group(p, label, ic) {
@@ -70,7 +94,8 @@
     if (sel.date) parts.push('<span>' + S.fmtDate(sel.date) + '</span>');
     if (sel.time) parts.push('<b class="ltr">' + sel.time + '</b>');
     $('summaryLine').innerHTML = UI.icon('calendar') + (parts.length ? parts.join(' · ') : '<span>' + t('book_intro').split('.')[0] + '</span>');
-    $('submitBtn').innerHTML = UI.icon('send', 'flip') + '<span>' + t('submit') + '</span>';
+    $('submitBtn').innerHTML = submitting ? '<span class="spin light"></span><span>' + t('save_saving') + '</span>' : UI.icon('send', 'flip') + '<span>' + t('submit') + '</span>';
+    $('submitBtn').disabled = submitting;
     $('consent').innerHTML = UI.icon('shield') + '<span>' + t('f_consent') + '</span>';
   }
 
@@ -103,6 +128,7 @@
 
   $('bookForm').addEventListener('submit', function (e) {
     e.preventDefault();
+    if (submitting) return;
     var name = $('fName').value.trim(), phone = $('fPhone').value.replace(/\D/g, ''), ok = true, firstBad = null;
     function bad(id, key, sec) { showErr(id, key); ok = false; if (!firstBad) firstBad = sec; }
     if (!sel.service) bad('errService', 'err_service', 'secService'); else showErr('errService');
@@ -112,23 +138,77 @@
     if (phone.length !== 8) { bad('errPhone', 'err_phone', 'secInfo'); $('fPhone').classList.add('err'); } else { showErr('errPhone'); $('fPhone').classList.remove('err'); }
     if (!ok) { $(firstBad).scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     var honey = ($('fWebsite') && $('fWebsite').value) || '';
-    try {
-      lastBooking = S.A.create({ ref: Notify.newRef(), name: name, phone: phone, service: sel.service, date: sel.date, time: sel.time, note: $('fNote').value, deposit: $('fDeposit').checked, lang: I18N.lang });
-    } catch (err) {
-      sel.time = null; renderSlots(); showErr('errTime', 'err_taken'); $('secTime').scrollIntoView({ behavior: 'smooth' }); return;
+    var data = { ref: Notify.newRef(), name: name, phone: phone, service: sel.service, date: sel.date, time: sel.time, note: $('fNote').value.trim(), deposit: $('fDeposit').checked, lang: I18N.lang };
+    if (!LIVE) {
+      var b0;
+      try { b0 = S.A.create(data); } catch (err) { return slotTaken(); }
+      b0.sync = 'demo';
+      return finish(b0, honey);
     }
-    lastBooking.notify = 'sending';
-    Notify.myAdd(lastBooking);
-    renderSuccess(lastBooking);
-    renderHeader();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    var b = lastBooking;
-    Notify.send(b, honey).then(function (r) {
-      b.notify = r.ok ? 'ok' : 'fail';
-      Notify.myUpdate(b.ref, { notify: b.notify });
-      if (lastBooking === b) renderNotify(b);
+    if (honey) { // bot: pretend success, store nothing
+      return finish(Object.assign({}, data, { createdAt: new Date().toISOString(), status: 'pending', sync: 'demo' }), honey);
+    }
+    var b = Object.assign({}, data, { token: API.newToken(), createdAt: new Date().toISOString(), status: 'pending', sync: 'pending' });
+    submitting = true; renderSummary();
+    Notify.myAdd(b);
+    Notify.pushOne(b).then(function (res) {
+      submitting = false; renderSummary();
+      if (res === 'conflict') {
+        Notify.myRemove(b.ref);
+        if (taken) taken[b.date + ' ' + b.time] = 1;
+        return slotTaken();
+      }
+      b.sync = res === 'saved' ? 'saved' : 'pending';
+      finish(b, honey);
     });
   });
+
+  function slotTaken() {
+    sel.time = null; renderSlots(); renderSummary(); showErr('errTime', 'err_taken');
+    $('secTime').scrollIntoView({ behavior: 'smooth' });
+    loadTaken();
+  }
+
+  function finish(b, honey) {
+    lastBooking = b;
+    b.notify = 'sending';
+    if (!honey) {
+      if (LIVE) Notify.myUpdate(b.ref, { notify: 'sending', sync: b.sync });
+      else Notify.myAdd(b);
+    }
+    renderSuccess(b);
+    renderHeader();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    Notify.send(b, honey).then(function (r) {
+      b.notify = r.ok ? 'ok' : 'fail';
+      if (!honey) Notify.myUpdate(b.ref, { notify: b.notify });
+      if (lastBooking === b) renderNotify(b);
+    });
+    if (b.sync === 'pending') retryLoop(b);
+  }
+
+  /* offline at booking time: keep retrying quietly while the page is open */
+  function retryLoop(b) {
+    var tries = 0;
+    (function again() {
+      if (lastBooking !== b || tries++ > 20) return;
+      setTimeout(function () {
+        if (lastBooking !== b) return;
+        Notify.pushOne(Notify.myGet(b.ref) || b).then(function (res) {
+          if (res === 'saved' || res === 'conflict') { b.sync = res; renderSave(b); if (res === 'conflict') renderSuccess(b); }
+          else again();
+        });
+      }, Math.min(30000, 4000 * tries));
+    })();
+  }
+
+  function renderSave(b) {
+    var el = $('saveLine'); if (!el) return;
+    var st = b.sync === 'saved' ? 'ok' : b.sync === 'demo' ? 'demo' : b.sync === 'conflict' ? 'fail' : 'fail';
+    el.className = 'notify-line ' + st;
+    el.innerHTML = UI.icon(st === 'ok' ? 'check' : st === 'demo' ? 'info' : 'alert') +
+      '<span>' + t(b.sync === 'saved' ? 'save_ok' : b.sync === 'demo' ? 'save_demo' : b.sync === 'conflict' ? 'sync_conflict' : 'save_fail') + '</span>';
+  }
 
   function renderNotify(b) {
     var el = $('notifyLine'); if (!el) return;
@@ -150,15 +230,16 @@
         '<h2>' + t('success_title') + '</h2>' +
         '<p id="successMsg">' + t('success_msg') + '</p>' +
         '<div class="ref-box"><small>' + t('booking_no') + '</small><b id="refCode">' + b.ref + '</b></div>' +
+        '<div class="notify-line" id="saveLine" role="status" aria-live="polite"></div>' +
         '<div class="notify-line sending" id="notifyLine" role="status" aria-live="polite"></div>' +
       '</section>' +
-      '<section class="card trk-card" id="trackCard"><div class="card-title">' + UI.icon('calendar') + t('summary') + '<span class="chip warn" style="margin-inline-start:auto">' + UI.icon('clock') + t('trk_plan') + '</span></div>' +
-        Notify.trackerHtml(1) +
+      '<section class="card trk-card" id="trackCard"><div class="card-title">' + UI.icon('calendar') + t('summary') + '<span style="margin-inline-start:auto">' + Notify.statusChip(b) + '</span></div>' +
+        Notify.trackerHtml(b) +
         Notify.detailsHtml(b) +
         '<a class="btn btn-wa btn-block" style="margin-top:14px" id="waOwnerBtn" target="_blank" rel="noopener" href="' + Notify.waOwnerLink(b) + '">' + UI.icon('wa') + '<span>' + t('send_wa_owner') + '</span></a>' +
         '<p class="muted tiny" style="margin-top:6px;text-align:center">' + t('wa_hint') + '</p>' +
         '<a class="btn btn-soft btn-block" style="margin-top:10px" id="myLink" href="mes-rendez-vous.html">' + UI.icon('calendar') + '<span>' + t('view_my') + '</span></a>' +
-        '<p class="muted tiny" style="margin-top:8px;text-align:center">' + t('trk_offline_note') + '</p>' +
+        '<p class="muted tiny" style="margin-top:8px;text-align:center">' + t(LIVE ? 'trk_live_note' : 'trk_offline_note') + '</p>' +
       '</section>' +
       '<section class="card" id="depositCard"><div class="card-title">' + UI.icon('wallet') + t('deposit_title') + '</div>' +
         '<p class="small" style="margin-bottom:10px">' + t('deposit_body', { amount: '<b>' + S.money(S.CLINIC.depositAmount) + '</b>' }) + '</p>' +
@@ -170,6 +251,7 @@
         '<p class="muted tiny" style="margin-top:8px">' + t('deposit_note') + '</p>' +
       '</section>' +
       '<button class="btn btn-ghost btn-block" style="margin-top:12px" id="againBtn" type="button">' + UI.icon('calendar') + '<span>' + t('book_another') + '</span></button>';
+    renderSave(b);
     renderNotify(b);
     $('againBtn').addEventListener('click', function () {
       lastBooking = null; sel = { service: null, date: firstAvailableDay(), time: null };
@@ -179,6 +261,8 @@
 
   sel.date = firstAvailableDay();
   var qs = new URLSearchParams(location.search);
-  if (qs.get('service')) sel.service = qs.get('service');
+  if (qs.get('service') && S.SERVICES.some(function (x) { return x.id === qs.get('service'); })) sel.service = qs.get('service');
   renderAll();
+  loadTaken();
+  if (LIVE) Notify.syncPending();
 })();
