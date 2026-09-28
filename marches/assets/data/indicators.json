@@ -1,0 +1,280 @@
+{
+ "window": {
+  "start": "2026-06-29",
+  "end": "2026-09-27",
+  "days": 91
+ },
+ "source": "https://marchespublics.gov.mr (API publique /api/avis/forSite)",
+ "snapshot": {
+  "snapshot_started_utc": "2026-09-28T16:44:47.172165Z",
+  "base": "https://marchespublics.gov.mr",
+  "avis_totalCount": 4945,
+  "activities_totalCount": 4457,
+  "annonces_totalCount": 88,
+  "snapshot_finished_utc": "2026-09-28T16:45:49.946157Z"
+ },
+ "n_notices": 749,
+ "n_procedures": 403,
+ "n_authorities": 111,
+ "portal_total_notices": 4945,
+ "portal_first_notice": "2024-11-21",
+ "per_week": [
+  {
+   "week": "2026-06-29",
+   "n": 47
+  },
+  {
+   "week": "2026-07-06",
+   "n": 91
+  },
+  {
+   "week": "2026-07-13",
+   "n": 40
+  },
+  {
+   "week": "2026-07-20",
+   "n": 52
+  },
+  {
+   "week": "2026-07-27",
+   "n": 64
+  },
+  {
+   "week": "2026-08-03",
+   "n": 65
+  },
+  {
+   "week": "2026-08-10",
+   "n": 43
+  },
+  {
+   "week": "2026-08-17",
+   "n": 68
+  },
+  {
+   "week": "2026-08-24",
+   "n": 27
+  },
+  {
+   "week": "2026-08-31",
+   "n": 95
+  },
+  {
+   "week": "2026-09-07",
+   "n": 55
+  },
+  {
+   "week": "2026-09-14",
+   "n": 45
+  },
+  {
+   "week": "2026-09-21",
+   "n": 57
+  }
+ ],
+ "per_week_median": 55,
+ "by_family": {
+  "award_prov": 230,
+  "call": 184,
+  "opening": 138,
+  "award_final": 91,
+  "addendum": 41,
+  "other": 34,
+  "evaluation": 31
+ },
+ "by_market_type": {
+  "Fournitures": 283,
+  "Travaux": 253,
+  "Prestations intellectuelles": 168,
+  "Services Courants": 45
+ },
+ "by_procedure": {
+  "Appel Offres Ouvert National": 475,
+  "Sélection fondée sur la qualité technique et le coût": 89,
+  "Appel d'Offres Ouvert International": 85,
+  "Sélection Fondée sur les Qualifications des Consultants": 46,
+  "Sélection de Consultants Individuels": 14,
+  "Entente Directe": 8,
+  "Consultation Simplifiée": 6,
+  "Mode de Sélection au Moindre Coût (SMC)": 5,
+  "Consultation concurrentielle des candidats": 5,
+  "Sélection fondée sur la qualification des consultants": 5,
+  "Appel d’offres précédé d’une pré qualification": 2,
+  "Appel d'offres international restreint": 2,
+  "Sélection des consultants individuels": 2,
+  "Appel à Proposition": 2,
+  "Sélection fondée sur un « budget déterminé »": 1,
+  "Appel d’Offres  National Restreint": 1,
+  "Appel à Proposition Sans Préqualification": 1
+ },
+ "procedure_ar": {
+  "Appel Offres Ouvert National": "استدراج مناقصة وطنية مفتوحة",
+  "Sélection fondée sur la qualité technique et le coût": "الاختيار القائم على أساس الجودة الفنية والتكلفة",
+  "Sélection Fondée sur les Qualifications des Consultants": "الاختيار على أساس كفاءة الاستشاريين",
+  "Appel d'Offres Ouvert International": "استدراج مناقصة مفتوحة دولية",
+  "Mode de Sélection au Moindre Coût (SMC)": "طريقة التكلفة الأقل",
+  "Sélection de Consultants Individuels": "اختيار الاستشاريين الفردين",
+  "Consultation Simplifiée": "الاستشارة المبسطة",
+  "Appel d’offres précédé d’une pré qualification": "الدعوة لتقديم العروض المسبوقة بتأهيل مسبق",
+  "Appel d'offres international restreint": "استدراج مناقصة دولية مقيدة",
+  "Entente Directe": "التفاهم المباشر",
+  "Consultation concurrentielle des candidats": "استشارة الموردين بالطرق التنافسية",
+  "Sélection fondée sur la qualification des consultants": "الاختيار على أساس تأهيل االستشاريين",
+  "Sélection fondée sur un « budget déterminé »": "\"الاختيار على أساس \"الميزانية المحددة",
+  "Sélection des consultants individuels": "اختيار الاستشاريين الفرديين",
+  "Appel à Proposition": "دعوة لتقديم مقترحات",
+  "Appel d’Offres  National Restreint": "استدراج مناقصة مفتوحة مقيدة",
+  "Appel à Proposition Sans Préqualification": "Appel à Proposition Sans Préqualification"
+ },
+ "market_type_ar": {
+  "Travaux": "الأشغال",
+  "Prestations intellectuelles": "الخدمات ذات الطابع الفكري",
+  "Fournitures": "التوريدات",
+  "Services Courants": "خدمات الصيانة"
+ },
+ "top_authorities": [
+  {
+   "fr": "Société Mauritanienne d'Electricité",
+   "ar": "الشركة الموريتانية للكهرباء",
+   "n": 36
+  },
+  {
+   "fr": "Ministère de l’Habitat, de l’Urbanisme et de l’Aménagement du Territoire",
+   "ar": "وزارة الإسكان والعمران الاستصلاح الترابي",
+   "n": 35
+  },
+  {
+   "fr": "Ministére de l'Autonomisation des jeunes de l'Emploi des Sports et du Service civique",
+   "ar": "وزارة  تمكين الشباب والتشغيل والرياضة والخدمة المدنية",
+   "n": 34
+  },
+  {
+   "fr": "Agence de Développement Urbain",
+   "ar": "وكالة التنمية الحضرية",
+   "n": 29
+  },
+  {
+   "fr": "Délégation Générale de la  Solidarité Nationale et Lutte Contre l’Exclusion -  TAAZOUR",
+   "ar": "''المندوبية العامة للتضامن الوطني ومكافحة الاقصاء ''التآزر",
+   "n": 27
+  },
+  {
+   "fr": "Programme Régional D'intégration Numérique en Afrique de l'Ouest (WARDIP)",
+   "ar": "برنامج  الجهوى  التكامل الرقمي في غرب أفريقيا",
+   "n": 23
+  },
+  {
+   "fr": "Projet Régional d’Appui au Pastoralisme au Sahel - PRAPS II",
+   "ar": "المرحلة الثانية من المشروع الإقليمي لدعم الرعي في منطقة الساحل",
+   "n": 22
+  },
+  {
+   "fr": "Ministère de l'Hydraulique et de l'Assainissement",
+   "ar": "وزارة المياه والصرف الصحي",
+   "n": 22
+  },
+  {
+   "fr": "Agence National de Recherches Géologiques et du Patrimoine Minier",
+   "ar": "الوكالة الوطنية للبحوث الجيولوجية و الأملاك المعدنية",
+   "n": 18
+  },
+  {
+   "fr": "Projet de Développement des Ressources Energétiques et Appui au Secteur Minier - DREAM",
+   "ar": "DREAM",
+   "n": 18
+  }
+ ],
+ "top10_share": 0.352,
+ "funders": {
+  "procedures_with_call": 175,
+  "procedures_with_detail": 175,
+  "mix": {
+   "Budget de l'État": 126,
+   "Non renseigné": 29,
+   "Financement extérieur (non précisé)": 19,
+   "Autres partenaires": 1
+  }
+ },
+ "pdf_readability": {
+  "checked": 739,
+  "text_layer": 190,
+  "image_only": 549,
+  "not_checked": 10,
+  "rule": "text layer = at least 200 characters returned by pdftotext on the first 12 pages"
+ },
+ "deadlines": {
+  "calls": 184,
+  "extracted": 154,
+  "not_extracted": 30,
+  "by_method": {
+   "text": 37,
+   "ocr": 117
+  },
+  "days_pub_to_deadline": {
+   "AAO international": {
+    "n": 14,
+    "median": 48.0,
+    "p25": 34,
+    "p75": 53
+   },
+   "AAO national": {
+    "n": 112,
+    "median": 25.5,
+    "p25": 22,
+    "p75": 31
+   },
+   "AMI": {
+    "n": 28,
+    "median": 15.0,
+    "p25": 13,
+    "p75": 19
+   }
+  }
+ },
+ "funders_text": {
+  "calls_with_text": 180,
+  "mentions": {
+   "IDA / Banque mondiale": 19,
+   "Budget de l'État": 12,
+   "BAD / FAD": 7,
+   "AFD": 6,
+   "Fonds arabes / du Golfe": 6,
+   "BID": 1
+  },
+  "rule": "partner named (full name case-insensitive, or acronym case-sensitive) within 160 characters after a financing expression (financé, financement, obtenu, crédit, don, prêt, sur fonds, imputation), excluding experience/reference/sanction/'projets financés par des bailleurs' contexts; one count per notice and partner"
+ },
+ "chains": {
+  "procedures_with_prov_award_in_window": 134,
+  "with_call_and_opening_on_portal": 52,
+  "open_tender_procedures": 104,
+  "open_tender_with_call_and_opening": 44,
+  "call_to_opening_days": {
+   "n": 52,
+   "median": 26.5,
+   "p25": 22,
+   "p75": 37
+  },
+  "opening_to_prov_award_days": {
+   "n": 52,
+   "median": 28.5,
+   "p25": 10,
+   "p75": 74
+  },
+  "call_to_prov_award_days": {
+   "n": 52,
+   "median": 67.0,
+   "p25": 40,
+   "p75": 101
+  },
+  "prov_to_final_award_days": {
+   "n": 19,
+   "median": 34,
+   "p25": 15,
+   "p75": 37
+  }
+ },
+ "probable_duplicates": 54,
+ "probable_duplicates_rule": "extra copies of the same file name for the same procedure id and publication type (often one per lot)",
+ "addenda_per_100_calls": 22.3,
+ "snapshot_date": "2026-09-28"
+}
