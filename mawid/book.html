@@ -15,6 +15,7 @@
     <div class="appbar-top">
       <div class="brand" id="brand"></div>
       <div class="appbar-actions">
+        <a class="pill-btn" id="myBtn" href="mes-rendez-vous.html"></a>
         <button class="pill-btn" id="langBtn" type="button"></button>
       </div>
     </div>
@@ -25,6 +26,10 @@
 
   <main class="container" id="formView">
     <form id="bookForm" novalidate>
+      <!-- anti-spam honeypot: humans never see or fill this field -->
+      <div class="hp-field" aria-hidden="true">
+        <label>Website <input type="text" id="fWebsite" name="website" tabindex="-1" autocomplete="off"></label>
+      </div>
       <section class="card" id="secService">
         <div class="card-title"><span class="step-num">1</span><span data-i18n="step_service"></span></div>
         <div class="svc-grid" id="svcGrid"></div>
@@ -69,12 +74,13 @@
   <footer class="footer">
     <div class="tagline" data-i18n="tagline"></div>
     <div><b>AICore موعد</b> · <span data-i18n="footer"></span></div>
-    <div style="margin-top:6px"><a href="index.html" class="tiny" id="staffLink">لوحة الموظفين · Espace équipe</a></div>
+    <div style="margin-top:6px"><a href="mes-rendez-vous.html" class="tiny">مواعيدي · Mes rendez-vous</a> · <a href="index.html" class="tiny" id="staffLink">لوحة الموظفين · Espace équipe</a></div>
   </footer>
 
   <script src="assets/js/i18n.js"></script>
   <script src="assets/js/store.js"></script>
   <script src="assets/js/ui.js"></script>
+  <script src="assets/js/notify.js"></script>
   <script src="assets/js/book.js"></script>
 </body>
 </html>

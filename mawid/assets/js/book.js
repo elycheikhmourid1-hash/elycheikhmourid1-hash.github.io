@@ -18,6 +18,7 @@
   function renderHeader() {
     $('brand').innerHTML = UI.LOGO + '<div class="grow"><div class="brand-name">' + t('product') + '</div><div class="brand-sub">' + t('subtitle') + '</div></div>';
     $('langBtn').innerHTML = UI.icon('globe') + '<span>' + t('langSwitch') + '</span>';
+    var mb = $('myBtn'); if (mb) { var n = Notify.myList().length; mb.setAttribute('aria-label', t('my_bookings')); mb.title = t('my_bookings'); mb.innerHTML = UI.icon('calendar') + '<span class="pill-lbl">' + t('my_bookings') + '</span>' + (n ? '<span class="badge">' + n + '</span>' : ''); }
     $('clinicLine').innerHTML = UI.icon('tooth') + '<span>' + t('clinicName') + '</span>';
     $('heroTitle').textContent = t('book_title');
     $('heroSub').textContent = t('book_intro');
@@ -110,35 +111,54 @@
     if (name.length < 3) { bad('errName', 'err_name', 'secInfo'); $('fName').classList.add('err'); } else { showErr('errName'); $('fName').classList.remove('err'); }
     if (phone.length !== 8) { bad('errPhone', 'err_phone', 'secInfo'); $('fPhone').classList.add('err'); } else { showErr('errPhone'); $('fPhone').classList.remove('err'); }
     if (!ok) { $(firstBad).scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    var honey = ($('fWebsite') && $('fWebsite').value) || '';
     try {
-      lastBooking = S.A.create({ name: name, phone: phone, service: sel.service, date: sel.date, time: sel.time, note: $('fNote').value, deposit: $('fDeposit').checked, lang: I18N.lang });
+      lastBooking = S.A.create({ ref: Notify.newRef(), name: name, phone: phone, service: sel.service, date: sel.date, time: sel.time, note: $('fNote').value, deposit: $('fDeposit').checked, lang: I18N.lang });
     } catch (err) {
       sel.time = null; renderSlots(); showErr('errTime', 'err_taken'); $('secTime').scrollIntoView({ behavior: 'smooth' }); return;
     }
+    lastBooking.notify = 'sending';
+    Notify.myAdd(lastBooking);
     renderSuccess(lastBooking);
+    renderHeader();
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    var b = lastBooking;
+    Notify.send(b, honey).then(function (r) {
+      b.notify = r.ok ? 'ok' : 'fail';
+      Notify.myUpdate(b.ref, { notify: b.notify });
+      if (lastBooking === b) renderNotify(b);
+    });
   });
+
+  function renderNotify(b) {
+    var el = $('notifyLine'); if (!el) return;
+    var st = b.notify || 'sending';
+    el.className = 'notify-line ' + st;
+    el.innerHTML = (st === 'sending' ? '<span class="spin"></span>' : UI.icon(st === 'ok' ? 'check' : 'alert')) +
+      '<span>' + t(st === 'ok' ? 'notif_ok' : st === 'fail' ? 'notif_fail' : 'notif_sending') + '</span>';
+    var wa = $('waOwnerBtn');
+    if (wa) wa.classList.toggle('btn-pulse', st === 'fail');
+  }
 
   function renderSuccess(b) {
     $('formView').classList.add('hidden');
     var v = $('successView'); v.classList.remove('hidden');
-    var waText = S.draft('patient_request', b, I18N.lang);
     var merchantColors = { Bankily: '#E4572E', Sedad: '#2A6FDB', Masrvi: '#0E9F6E' };
     v.innerHTML =
       '<section class="card success-hero">' +
         '<div class="success-icon">' + UI.icon('clock') + '</div>' +
         '<h2>' + t('success_title') + '</h2>' +
         '<p id="successMsg">' + t('success_msg') + '</p>' +
-        '<div class="ref-box"><small>' + t('your_ref') + '</small><b id="refCode">' + b.ref + '</b></div>' +
+        '<div class="ref-box"><small>' + t('booking_no') + '</small><b id="refCode">' + b.ref + '</b></div>' +
+        '<div class="notify-line sending" id="notifyLine" role="status" aria-live="polite"></div>' +
       '</section>' +
-      '<section class="card"><div class="card-title">' + UI.icon('calendar') + t('summary') + '<span class="chip warn" style="margin-inline-start:auto">' + UI.icon('clock') + t('pending_review') + '</span></div>' +
-        '<dl class="kv"><dt>' + t('service') + '</dt><dd>' + t('svc_' + b.service) + '</dd>' +
-        '<dt>' + t('step_date') + '</dt><dd>' + S.fmtDate(b.date) + '</dd>' +
-        '<dt>' + t('step_time') + '</dt><dd class="ltr">' + b.time + '</dd>' +
-        '<dt>' + t('f_name') + '</dt><dd dir="auto">' + UI.esc(b.name) + '</dd>' +
-        '<dt>' + t('phone') + '</dt><dd class="ltr">' + S.phoneDisplay(b.phone) + '</dd></dl>' +
-        '<a class="btn btn-wa btn-block" style="margin-top:14px" id="waBtn" target="_blank" rel="noopener" href="' + S.waLink(S.CLINIC.waNumber, waText) + '">' + UI.icon('wa') + '<span>' + t('send_wa') + '</span></a>' +
+      '<section class="card trk-card" id="trackCard"><div class="card-title">' + UI.icon('calendar') + t('summary') + '<span class="chip warn" style="margin-inline-start:auto">' + UI.icon('clock') + t('trk_plan') + '</span></div>' +
+        Notify.trackerHtml(1) +
+        Notify.detailsHtml(b) +
+        '<a class="btn btn-wa btn-block" style="margin-top:14px" id="waOwnerBtn" target="_blank" rel="noopener" href="' + Notify.waOwnerLink(b) + '">' + UI.icon('wa') + '<span>' + t('send_wa_owner') + '</span></a>' +
         '<p class="muted tiny" style="margin-top:6px;text-align:center">' + t('wa_hint') + '</p>' +
+        '<a class="btn btn-soft btn-block" style="margin-top:10px" id="myLink" href="mes-rendez-vous.html">' + UI.icon('calendar') + '<span>' + t('view_my') + '</span></a>' +
+        '<p class="muted tiny" style="margin-top:8px;text-align:center">' + t('trk_offline_note') + '</p>' +
       '</section>' +
       '<section class="card" id="depositCard"><div class="card-title">' + UI.icon('wallet') + t('deposit_title') + '</div>' +
         '<p class="small" style="margin-bottom:10px">' + t('deposit_body', { amount: '<b>' + S.money(S.CLINIC.depositAmount) + '</b>' }) + '</p>' +
@@ -150,6 +170,7 @@
         '<p class="muted tiny" style="margin-top:8px">' + t('deposit_note') + '</p>' +
       '</section>' +
       '<button class="btn btn-ghost btn-block" style="margin-top:12px" id="againBtn" type="button">' + UI.icon('calendar') + '<span>' + t('book_another') + '</span></button>';
+    renderNotify(b);
     $('againBtn').addEventListener('click', function () {
       lastBooking = null; sel = { service: null, date: firstAvailableDay(), time: null };
       $('bookForm').reset(); v.classList.add('hidden'); $('formView').classList.remove('hidden'); renderAll(); window.scrollTo(0, 0);

@@ -302,7 +302,7 @@
       return act(function () {
         if (isTaken(data.date, data.time)) throw new Error('taken');
         var b = {
-          id: uid(), ref: nextRef(), name: data.name.trim(), lang: data.lang || 'ar', phone: data.phone,
+          id: uid(), ref: data.ref || nextRef(), name: data.name.trim(), lang: data.lang || 'ar', phone: data.phone,
           service: data.service, date: data.date, time: data.time, note: (data.note || '').trim(),
           status: 'pending', createdAt: new Date().toISOString(), source: 'web', decision: null, proposal: null,
           deposit: data.deposit ? { status: 'awaiting', amount: CLINIC.depositAmount, requestedBy: 'patient' } : { status: 'none' },
