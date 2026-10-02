@@ -12,7 +12,7 @@
   function qrSvg(text) {
     if (qrcode.stringToBytesFuncs && qrcode.stringToBytesFuncs['UTF-8']) qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
     var q = qrcode(0, 'Q'); q.addData(text); q.make();
-    return q.createSvgTag({ cellSize: 4, margin: 0, scalable: true }).replace('<path ', '<path fill="#052B38" ');
+    return q.createSvgTag({ cellSize: 4, margin: 0, scalable: true }).replace('<path ', '<path fill="#1e1240" ');
   }
 
   function render() {
@@ -20,7 +20,7 @@
     document.title = t('product') + ' – ' + t('more_share') + ' (' + t('demoBanner') + ')';
     var target = mode === 'book' ? bookUrl : waUrl();
     $('controls').innerHTML =
-      '<div class="row" style="justify-content:space-between;margin-bottom:12px"><a class="btn btn-ghost btn-sm" href="index.html#/more">' + UI.icon('chevron', 'back') + '<span>' + t('share_back') + '</span></a>' +
+      '<div class="row" style="justify-content:space-between;margin-bottom:12px"><a class="btn btn-ghost btn-sm" href="' + (/\/mawid\/(index\.html)?([?#]|$)/.test(document.referrer || '') ? 'index.html' : 'demo.html#/more') + '">' + UI.icon('chevron', 'back') + '<span>' + t('share_back') + '</span></a>' +
       '<div class="row"><button class="btn btn-ghost btn-sm" id="langBtn">' + UI.icon('globe') + '<span>' + t('langSwitch') + '</span></button>' +
       '<button class="btn btn-primary btn-sm" id="printBtn">' + UI.icon('print') + '<span>' + t('share_print') + '</span></button></div></div>' +
       '<section class="card"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><b class="small">' + t('share_mode') + '</b>' +

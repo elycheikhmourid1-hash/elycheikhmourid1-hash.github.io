@@ -1,11 +1,10 @@
-Copyright 2009 The Cairo Project Authors (https://github.com/Gue3bara/Cairo)
+Fonts bundled with AICore Mawʿid (all under the SIL Open Font License 1.1):
+  - Inter            © The Inter Project Authors (https://github.com/rsms/inter)
+  - Tajawal          © Boutros Fonts / Tajawal Project Authors (https://github.com/googlefonts/tajawal)
+  - Space Grotesk    © The Space Grotesk Project Authors (https://github.com/floriankarsten/space-grotesk)
+Files are the Google Fonts woff2 subsets (Latin for Inter / Space Grotesk, Arabic for Tajawal).
+The full license text follows.
 
-This Font Software is licensed under the SIL Open Font License, Version 1.1.
-This license is copied below, and is also available with a FAQ at:
-http://scripts.sil.org/OFL
-
-
------------------------------------------------------------
 SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
 -----------------------------------------------------------
 

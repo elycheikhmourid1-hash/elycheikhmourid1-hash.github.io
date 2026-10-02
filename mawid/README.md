@@ -5,8 +5,37 @@
 
 by AICore Digital · aicoredigital.com
 
-> ⚠️ **DEMO – FICTIONAL DATA · نموذج تجريبي – بيانات وهمية · Démo – données fictives**
-> Every name, phone number (`+222 00 00 00 xx`), address, price and payment in this demo is invented. Data lives only in the browser's `localStorage`. There is **no server, no WhatsApp API and no automatic sending**: the app builds `wa.me` links that open WhatsApp with a prefilled message, and a staff member presses **Send**.
+> **Pilot with a fictional clinic.** The clinic, doctors, prices and payment numbers are invented. When the backend is configured (`assets/js/config.js`), **bookings are real and stored on Supabase**; otherwise the pages run in offline demo mode and data stays in the browser (`localStorage`). Nothing is ever sent automatically on WhatsApp: the app builds `wa.me` links and a staff member presses **Send**.
+
+---
+
+## v2 — live backend (Supabase free tier)
+
+| Page | Role |
+|---|---|
+| `book.html` | Patient booking. Taken slots come from the server; the booking is saved on the server with a secret token, **and** a copy stays on the phone. The owner is still e-mailed through FormSubmit (secondary notification). |
+| `mes-rendez-vous.html` | **مواعيدي / Mes rendez-vous.** Polls the server every 15 s (paused when the tab is hidden) and updates the status badge and the 4-step tracker: *قيد الانتظار / En attente* → *تم التأكيد / Confirmé* (or *مرفوض / Refusé*) → *تمت الزيارة / Terminé*. Shows the clinic's note and any time change. "Booked from another phone?" finds a booking with its number + phone. |
+| `index.html` | **Live receptionist desk** (e-mail + password, Supabase Auth). Live list (8 s refresh), KPIs, status tabs, search, date filters, **Accept** (optional time change + note), **Reject** (reason + note), **Reschedule**, **Done**, **Reopen**, **Delete**, and a one-tap WhatsApp draft (Arabic / French, editable) to the patient. Every decision stores the staff name + time (audit trail in `booking_events`). |
+| `demo.html` | The previous full demo dashboard (fictional data, name-picker login, reminders, audit log, reports). |
+
+**Security model** (`backend/schema.sql`, tested by `security-test.mjs`, 36 checks):
+- Patients never read the `bookings` table. They go through `SECURITY DEFINER` functions: `create_booking` (validates day, slot, Friday closed, 60-day window, past slots, per-phone and global rate limits, one active booking per slot), `get_bookings` (only with booking number **+ secret token** or **+ phone**; not listable), `taken_slots` (dates/times only, no names).
+- Only authenticated users present in `public.staff` can list, update (status, note, date, time only — column privileges) or delete bookings (RLS + `is_staff()`). Public sign-ups are disabled; any other account gets nothing.
+- The site only contains the project URL and the **publishable/anon key** (public by design). The secret/service key is never committed.
+
+**If the backend is unreachable**, the booking is kept on the phone, the patient sees a clear message, and it is pushed automatically when the connection returns; the dashboard shows its last loaded list with an offline banner.
+
+### Setup (once)
+1. Sign in to **supabase.com** (GitHub login, free plan, no card) → *Account → Access Tokens* → generate a token.
+2. `SUPABASE_PAT=sbp_… node setup_supabase.mjs` (in the AICore tooling folder) creates the project `mawid` (eu-west-3), applies `backend/schema.sql`, disables sign-ups, creates the receptionist login, writes `assets/js/config.js` and runs the live security test.
+   *Manual alternative:* create a project, paste `backend/schema.sql` in the SQL Editor, *Authentication → Add user* (auto-confirm), run `backend/add-receptionist.sql` with that e-mail, turn off "Allow new users to sign up", then put the project URL and the publishable (or anon) key in `assets/js/config.js`.
+3. Add receptionists later: *Authentication → Add user*, then `backend/add-receptionist.sql`.
+
+### Limits
+- Supabase free projects **pause after 7 days without activity** (any booking or dashboard visit counts). A paused project is restored from the Supabase dashboard; meanwhile bookings stay on the patients' phones and are pushed later.
+- Free tier: 500 MB database, 2 active projects, 50,000 monthly auth users — far above a clinic's needs.
+- Clinic time zone is **Africa/Nouakchott** (UTC, no DST): the server rejects past slots and Fridays using that zone.
+- Updates reach the patient by polling (15 s), not push notifications. The patient is also told on WhatsApp by the receptionist.
 
 ---
 
@@ -26,12 +55,12 @@ Any static web server works. From this folder:
 
 ```bash
 python3 -m http.server 8765
-# then open http://localhost:8765/            (staff dashboard)
+# then open http://localhost:8765/            (live desk; demo: /demo.html)
 #           http://localhost:8765/book.html   (patient booking page)
 #           http://localhost:8765/share.html  (QR poster)
 ```
 
-It works offline once loaded. Everything is bundled locally: the Cairo font (SIL OFL), a QR generator (`qrcode-generator`, MIT) and hand-made SVG icons and charts. No CDN is used.
+It works offline once loaded. Everything is bundled locally: the Inter, Space Grotesk and Tajawal fonts (SIL OFL), a QR generator (`qrcode-generator`, MIT) and hand-made SVG icons and charts. No CDN is used.
 To publish it for free, push the folder to **GitHub Pages** or Netlify, then set that URL in *share.html → Booking link* so the QR code points to it.
 
 ### Pages
@@ -39,19 +68,19 @@ To publish it for free, push the folder to **GitHub Pages** or Netlify, then set
 |---|---|
 | `book.html` | **Patient booking**: service → day (Friday closed) → time (taken slots greyed out) → name, phone (+222) and note, plus an optional deposit. Afterwards it shows *"طلبك قيد المراجعة، سيؤكد لك موظف العيادة قريباً"*, a booking number (`RDV-XXXXXX`), a status tracker, a prefilled `wa.me` button, and Bankily / Sedad / Masrvi deposit instructions with the reference. |
 | `book.html` → owner e-mail | **Every submitted booking e-mails the owner** (elycheikh@aicoredigital.com) through [FormSubmit.co](https://formsubmit.co) (AJAX, free, no backend, no secret key — the page uses FormSubmit's public alias of the inbox, activated for `…/mawid/book.html`). Subject: `Nouveau rendez-vous — Mawid / حجز جديد · RDV-XXXXXX`; body: booking number, patient name, phone, service, doctor, clinic, date and time, note, deposit, language and timestamp. A hidden honeypot field blocks simple bots. If the e-mail call fails, the confirmation still shows, with a warning and a prefilled **إرسال عبر واتساب / Envoyer via WhatsApp** button to +1 804 485 3384. Code: `assets/js/notify.js`. |
-| `mes-rendez-vous.html` | **مواعيدي / Mes rendez-vous**: the patient's own bookings saved on this phone (`localStorage`, key `mawid_my_bookings_v1`, survives reloads and the daily demo reseed). Each booking shows its number (`RDV-XXXXXX`), doctor/specialty, clinic, date and time and a 4-step tracker: **التخطيط / Planification → الحجز / Réservation → الدفع / Paiement → الإيصال / Reçu**, with step 1 done and *جارٍ تخطيط الموعد… / Planification du RDV en cours…*. **Status does not update remotely yet** (no backend); the clinic confirms on WhatsApp. |
-| `index.html` | **Receptionist dashboard.** Demo login: pick Mariem, Sidi or Dr Ahmed (no password). Tabs: **طلبات جديدة / مؤكدة / مرفوضة-ملغاة / اليوم**. Each request can be **Confirmed**, **Refused** (with a reason) or given **another proposed time**. Every action records the staff name and time, then opens a **WhatsApp draft** (Arabic or French, editable) that the staff sends with one tap. Deposits show *بانتظار الدفع* until someone verifies them. Attendance is marked *حضر / لم يحضر*. |
-| `index.html#/reminders` | **Reminders**: tomorrow's (next open day's) confirmed appointments, each with its drafted message, a one-tap `wa.me` button and **Mark sent**. **Send all** walks through them one by one: open WhatsApp, then "Sent – next". |
-| `index.html#/audit` | **Audit log (سجل المراجعة)**: a chronological list of who did what and when (created, confirmed, refused, proposed, WhatsApp opened, reminder sent, payment verified, attended, no-show). You can filter by action and staff, search by name or reference, and export to CSV. It is the proof that a human stays in the loop (it shows "0 automatic sends"). |
-| `index.html#/reports` | **Reports**: bookings this week, confirmed vs refused, no-show rate, estimated revenue in MRU, deposits verified, bookings per day, busiest hours, and an estimate of **revenue saved by reminders** (labelled *demo calculation*, with its assumptions shown). **Copy daily summary** gives a WhatsApp-ready text for the clinic owner in Arabic or French. |
-| `index.html#/more` | Links to the booking page and QR poster, a language switch, a user switch and **Reset demo data**. |
+| `mes-rendez-vous.html` | **مواعيدي / Mes rendez-vous**: the patient's own bookings saved on this phone (`localStorage`, key `mawid_my_bookings_v1`, survives reloads and the daily demo reseed). Each booking shows its number (`RDV-XXXXXX`), doctor/specialty, clinic, date and time and a 4-step tracker: **التخطيط / Planification → الحجز / Réservation → الدفع / Paiement → الإيصال / Reçu**, with step 1 done and *جارٍ تخطيط الموعد… / Planification du RDV en cours…*. With the backend configured, the status updates live (see v2 above); in offline demo mode the clinic confirms on WhatsApp. |
+| `demo.html` | **Demo receptionist dashboard.** Demo login: pick Mariem, Sidi or Dr Ahmed (no password). Tabs: **طلبات جديدة / مؤكدة / مرفوضة-ملغاة / اليوم**. Each request can be **Confirmed**, **Refused** (with a reason) or given **another proposed time**. Every action records the staff name and time, then opens a **WhatsApp draft** (Arabic or French, editable) that the staff sends with one tap. Deposits show *بانتظار الدفع* until someone verifies them. Attendance is marked *حضر / لم يحضر*. |
+| `demo.html#/reminders` | **Reminders**: tomorrow's (next open day's) confirmed appointments, each with its drafted message, a one-tap `wa.me` button and **Mark sent**. **Send all** walks through them one by one: open WhatsApp, then "Sent – next". |
+| `demo.html#/audit` | **Audit log (سجل المراجعة)**: a chronological list of who did what and when (created, confirmed, refused, proposed, WhatsApp opened, reminder sent, payment verified, attended, no-show). You can filter by action and staff, search by name or reference, and export to CSV. It is the proof that a human stays in the loop (it shows "0 automatic sends"). |
+| `demo.html#/reports` | **Reports**: bookings this week, confirmed vs refused, no-show rate, estimated revenue in MRU, deposits verified, bookings per day, busiest hours, and an estimate of **revenue saved by reminders** (labelled *demo calculation*, with its assumptions shown). **Copy daily summary** gives a WhatsApp-ready text for the clinic owner in Arabic or French. |
+| `demo.html#/more` | Links to the booking page and QR poster, a language switch, a user switch and **Reset demo data**. |
 | `share.html` | **Printable QR poster** for the reception desk (Arabic and French). The QR code is generated in the browser and can point to the booking page or to a `wa.me` chat. It also shows the sample `wa.me` link and a print button. |
 | `dashboard.html` | Redirects to `index.html`. |
 
 **Demo data:** 40 bookings seeded over the past week and the next few days, in mixed statuses, with about 150 audit-log entries. The seed rebuilds itself automatically **when the calendar day changes**, so the demo always looks current. That also wipes any changes made during a visit. **Reset demo data** does the same on demand.
 **Languages:** Arabic (RTL, the default) and French (LTR). Use the switch in the header or add `?lang=fr` to the URL. WhatsApp drafts default to the patient's language and can be switched.
 
-### Limitations (be honest when demoing)
+### Limitations of the offline demo (`demo.html`, or no config)
 - No backend: data is per browser and per device (`localStorage`). A patient booking on one phone does **not** appear on another phone. Open the booking page and the dashboard **in the same browser** to show the flow (the dashboard updates live when a booking is made in another tab).
 - No real authentication: the staff "login" is a name picker.
 - No WhatsApp API: `wa.me` links only. Nothing is sent automatically, which is the point of the product, but it also means no delivery or read status.
@@ -66,10 +95,12 @@ To publish it for free, push the folder to **GitHub Pages** or Netlify, then set
 
 ### Files
 ```
-index.html, dashboard.html, book.html, share.html, mes-rendez-vous.html
+index.html (live desk), demo.html (demo dashboard), dashboard.html, book.html, share.html, mes-rendez-vous.html
 assets/css/app.css
 assets/js/i18n.js (AR/FR strings) · store.js (data, seed, actions + audit log, WhatsApp drafts) · ui.js · app.js · book.js · share.js · notify.js (owner e-mail via FormSubmit + patient tracker) · my.js (Mes rendez-vous) · fiber.js (fiber-optic header)
-assets/vendor/qrcode.js (MIT) · assets/fonts/Cairo-Variable.woff2 + OFL.txt · assets/img/logo.svg
+assets/js/config.js (Supabase URL + publishable key) · api.js (fetch-only Supabase client) · live.js (live desk)
+assets/vendor/qrcode.js (MIT) · assets/fonts/{Inter,SpaceGrotesk,Tajawal}-*.woff2 + OFL.txt · assets/img/logo.svg
+backend/schema.sql (tables, RLS, RPCs) · backend/add-receptionist.sql
 apps-script/Code.gs · apps-script/SETUP.md · apps-script/test/mock-test.js
 screenshots/ · demo-video.mp4
 ```
@@ -96,7 +127,8 @@ python3 -m http.server 8765
 
 ### الصفحات
 - **صفحة الحجز (`book.html`)**: الخدمة، ثم اليوم (الجمعة مغلق)، ثم الوقت (المحجوز رمادي)، ثم الاسم والهاتف والملاحظة. بعد الإرسال تظهر رسالة "طلبك قيد المراجعة، سيؤكد لك موظف العيادة قريباً" مع رقم مرجعي وزر واتساب جاهز وتعليمات العربون.
-- **لوحة الاستقبال (`index.html`)**: دخول تجريبي باختيار الاسم. تبويبات: طلبات جديدة، مؤكدة، مرفوضة/ملغاة، اليوم. أمام كل طلب: تأكيد أو رفض أو اقتراح وقت آخر، ويُسجَّل الاسم والوقت ثم تظهر مسودة واتساب يرسلها الموظف بضغطة. وفيها أيضاً التحقق من العربون وتسجيل الحضور والغياب.
+- **لوحة الاستقبال المباشرة (`index.html`)**: دخول بالبريد وكلمة المرور، قائمة مباشرة، قبول/رفض/تغيير الوقت مع ملاحظة، ورسالة واتساب جاهزة للمريض. والمريض يرى الحالة في «مواعيدي».
+- **اللوحة التجريبية (`demo.html`)**: دخول تجريبي باختيار الاسم. تبويبات: طلبات جديدة، مؤكدة، مرفوضة/ملغاة، اليوم. أمام كل طلب: تأكيد أو رفض أو اقتراح وقت آخر، ويُسجَّل الاسم والوقت ثم تظهر مسودة واتساب يرسلها الموظف بضغطة. وفيها أيضاً التحقق من العربون وتسجيل الحضور والغياب.
 - **التذكيرات**: مواعيد الغد مع رسائل جاهزة وزر واتساب وزر "تسجيل كمُرسل"، وخيار "إرسال الكل واحداً تلو الآخر".
 - **سجل المراجعة**: من فعل ماذا ومتى، مع فلترة وبحث وتصدير CSV. هذا هو دليل الإشراف البشري ("0 إرسال آلي").
 - **التقارير**: الحجوزات والتأكيد والرفض ونسبة الغياب والإيراد التقديري بالأوقية وأكثر الساعات ازدحاماً وما وفّرته التذكيرات (حساب تجريبي)، مع زر نسخ ملخص اليوم لواتساب صاحب العيادة.
@@ -113,4 +145,4 @@ python3 -m http.server 8765
 3. **لاحقاً: تذكيرات آلية عبر WhatsApp Cloud API** بقوالب "utility" معتمدة. Meta تحتسب السعر لكل رسالة، **وابتداءً من 1 أكتوبر 2026 تصبح رسائل الخدمة مدفوعة أيضاً، مع 1,000 رسالة خدمة مجانية شهرياً لكل رقم.** **مع الإبقاء على خطوة الموافقة البشرية**: موظف مسمّى يعتمد دفعة الرسائل، ويُسجَّل ذلك في السجل.
 
 ---
-*AICore Digital LLC, Richmond, VA · aicoredigital.com. Font: Cairo (SIL Open Font License 1.1). QR: qrcode-generator by Kazuhiko Arase (MIT).*
+*AICore Digital LLC, Richmond, VA · aicoredigital.com. Fonts: Inter, Space Grotesk, Tajawal (SIL Open Font License 1.1). QR: qrcode-generator by Kazuhiko Arase (MIT).*
