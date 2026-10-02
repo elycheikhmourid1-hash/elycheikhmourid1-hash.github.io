@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#06060d">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="AICore Robotics Ops 3D — SIMULATION. VSAT ground-station robot inspection with human approval.">
+<title>عمليات الروبوتات ثلاثي الأبعاد — AICore | عرض تجريبي</title>
+<link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="app3d.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l5 5 9-10"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 3v12M7 11l5 5 5-5M4 21h16"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L5 14h6l-1 8 8-12h-6z"/></symbol>
+    <symbol id="i-dish" viewBox="0 0 24 24"><path d="M5 9a9 9 0 0 0 10 10zM13 11l6-6M16 4l4 4M8 20h8"/></symbol>
+    <symbol id="i-therm" viewBox="0 0 24 24"><path d="M10 14V5a2 2 0 0 1 4 0v9a4 4 0 1 1-4 0zM12 9v7"/></symbol>
+    <symbol id="i-fence" viewBox="0 0 24 24"><path d="M4 21V8l2-3 2 3v13M10 21V8l2-3 2 3v13M16 21V8l2-3 2 3v13M3 12h18M3 17h18"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></symbol>
+    <symbol id="i-robot" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="11" rx="4"/><path d="M12 8V4M9 13v.01M15 13v.01"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></symbol>
+    <symbol id="i-full" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+    <symbol id="i-orbit" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="9" ry="4.5"/><circle cx="12" cy="12" r="2.2"/><path d="M19 8.5l2 0.5-0.5 2"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 6.5l9 7 9-7"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3.5 3.5 3.5 14.5 0 18M12 3c-3.5 3.5-3.5 14.5 0 18"/></symbol>
+    <symbol id="i-wa" viewBox="0 0 24 24"><path d="M4 20l1.3-4.2A8.5 8.5 0 1 1 8.2 18.8z"/><path d="M9.2 8.8c-.4 3 2.8 6.2 6 6l1-2-2-1-1 .8c-1-.5-1.8-1.3-2.3-2.3l.8-1-1-2z"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M3 11l18-8-8 18-2-8z"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.5-5.8M4 4v5h5"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M10 6l-6 6 6 6M4 12h16"/></symbol>
+  </defs>
+</svg>
+<a class="skip" href="#panel" data-i18n="skip"></a>
+
+<header id="top" class="top">
+  <a class="brand" href="./" aria-label="AICore Robotics Ops 3D">
+    <img src="../assets/img/favicon.svg" width="34" height="34" alt="">
+    <span class="brand-t"><b data-i18n="app_title"></b><small data-i18n="app_sub"></small></span>
+  </a>
+  <a class="btn btn-ghost btn-sm" id="to2d" href="../"><svg class="ico flip"><use href="#i-back"/></svg><span data-i18n="to2d"></span></a>
+  <span class="sp"></span>
+  <button class="btn btn-primary btn-sm" id="pres" type="button" aria-pressed="false"><svg class="ico"><use href="#i-play"/></svg><span id="pres-t"></span></button>
+  <button class="btn btn-ghost btn-sm" id="fs" type="button" aria-pressed="false"><svg class="ico"><use href="#i-full"/></svg><span id="fs-t"></span></button>
+  <div class="seg" id="langs" role="group" data-i18n-aria="lang_aria">
+    <button type="button" data-lang="ar" lang="ar">العربية</button><button type="button" data-lang="fr" lang="fr">Français</button><button type="button" data-lang="en" lang="en">English</button>
+  </div>
+  <span class="clock" id="clock-wrap"><span data-i18n="clock"></span> <bdi class="ltr" id="clock">--:--:--</bdi></span>
+</header>
+
+<main id="view" class="view">
+  <div class="sim-badge" role="status"><i class="pulse-dot"></i><span data-i18n="badge" dir="auto">SIMULATION / عرض تجريبي - بيانات افتراضية</span></div>
+  <div id="labels" class="labels" aria-hidden="true"></div>
+  <div id="camtools" class="camtools" role="group" data-i18n-aria="cam_aria">
+    <button type="button" data-cam="overview"><span data-i18n="cam_overview"></span></button>
+    <button type="button" data-cam="dish"><span data-i18n="cam_dish"></span></button>
+    <button type="button" data-cam="cabinets"><span data-i18n="cam_cabinets"></span></button>
+    <button type="button" id="cam-follow" aria-pressed="false"><span data-i18n="cam_follow"></span></button>
+    <button type="button" id="cam-cine" aria-pressed="false"><svg class="ico"><use href="#i-orbit"/></svg><span data-i18n="cam_cine"></span></button>
+  </div>
+  <div id="heat-legend" class="heat-legend" hidden><b data-i18n="heat_legend"></b><i></i><span><bdi class="ltr">30 °C</bdi><bdi class="ltr">70 °C</bdi></span></div>
+  <div id="fallback" class="fallback" hidden>
+    <p class="fb-msg" data-i18n="fb_msg"></p>
+    <canvas id="fb-canvas" width="900" height="520" role="img" data-i18n-aria="fb_aria"></canvas>
+  </div>
+</main>
+
+<section id="hud" class="hud" aria-live="polite" aria-label="Mission control"></section>
+
+<aside id="panel" class="panel" tabindex="-1">
+  <div class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-tab="missions" aria-selected="true" id="tab-missions"><span data-i18n="tab_missions"></span><i class="dot" id="nb-missions" hidden></i></button>
+    <button role="tab" data-tab="command" aria-selected="false" id="tab-command"><span data-i18n="tab_command"></span></button>
+    <button role="tab" data-tab="alerts" aria-selected="false" id="tab-alerts"><span data-i18n="tab_alerts"></span><i class="dot" id="nb-alerts" hidden></i></button>
+    <button role="tab" data-tab="audit" aria-selected="false" id="tab-audit"><span data-i18n="tab_audit"></span></button>
+    <button role="tab" data-tab="about" aria-selected="false" id="tab-about"><span data-i18n="tab_about"></span></button>
+  </div>
+  <div class="tabpanel" id="p-missions" role="tabpanel" aria-labelledby="tab-missions">
+    <h2 class="sec" data-i18n="fleet_title"></h2>
+    <div id="fleet" class="fleet"></div>
+    <h2 class="sec" data-i18n="tpl_title"></h2>
+    <p class="note" data-i18n="tpl_lead"></p>
+    <div id="tpl-grid" class="tpl-grid"></div>
+    <h2 class="sec"><span data-i18n="queue_title"></span> <span class="count" id="queue-count">0</span></h2>
+    <div id="queue" class="queue"></div>
+  </div>
+  <div class="tabpanel" id="p-command" role="tabpanel" aria-labelledby="tab-command" hidden>
+    <h2 class="sec" data-i18n="cmd_title"></h2>
+    <p class="banner" data-i18n="cmd_banner"></p>
+    <form id="cmd-form" class="cmd-form" autocomplete="off">
+      <label class="sr" for="cmd" data-i18n="cmd_label"></label>
+      <input id="cmd" type="text" maxlength="160" data-i18n-ph="cmd_ph" enterkeyhint="send">
+      <button class="btn btn-primary" id="cmd-go" type="submit"><svg class="ico flip"><use href="#i-send"/></svg><span data-i18n="cmd_go"></span></button>
+    </form>
+    <p class="tiny muted" data-i18n="cmd_examples"></p>
+    <div id="cmd-chips" class="chips"></div>
+    <div id="cmd-out" class="cmd-out" aria-live="polite"></div>
+  </div>
+  <div class="tabpanel" id="p-alerts" role="tabpanel" aria-labelledby="tab-alerts" hidden>
+    <h2 class="sec"><span data-i18n="al_title"></span> <span class="chip sim-chip">SIMULATED</span></h2>
+    <p class="note" data-i18n="al_lead"></p>
+    <div class="row-acts">
+      <button class="btn btn-ghost btn-sm" id="al-sim" type="button"><svg class="ico"><use href="#i-plus"/></svg><span data-i18n="al_sim"></span></button>
+      <button class="btn btn-primary btn-sm" id="al-dispatch" type="button"><svg class="ico flip"><use href="#i-send"/></svg><span data-i18n="al_dispatch"></span></button>
+    </div>
+    <label class="chk"><input type="checkbox" id="al-feed" checked><span data-i18n="al_feed"></span></label>
+    <div id="alerts" class="alerts"></div>
+  </div>
+  <div class="tabpanel" id="p-audit" role="tabpanel" aria-labelledby="tab-audit" hidden>
+    <h2 class="sec" data-i18n="au_title"></h2>
+    <p class="note" data-i18n="au_lead"></p>
+    <button class="btn btn-ghost btn-sm" id="csv" type="button"><svg class="ico"><use href="#i-down"/></svg><span data-i18n="au_csv"></span></button>
+    <div class="tbl-wrap"><table class="tbl" id="au-table"></table></div>
+  </div>
+  <div class="tabpanel" id="p-about" role="tabpanel" aria-labelledby="tab-about" hidden>
+    <div id="about"></div>
+    <button class="btn btn-ghost btn-sm" id="reset" type="button"><svg class="ico"><use href="#i-reset"/></svg><span data-i18n="reset"></span></button>
+  </div>
+</aside>
+
+<footer id="foot" class="foot">
+  <p class="foot-note" data-i18n="roadmap_note"></p>
+  <p class="foot-ct">
+    <b data-i18n="ct_name"></b> · <span>AICore Digital LLC · Richmond, VA</span> ·
+    <a href="https://wa.me/18044853384" target="_blank" rel="noopener" id="wa"><svg class="ico"><use href="#i-wa"/></svg><span>WhatsApp</span> <bdi class="ltr">+1 804 485 3384</bdi></a> ·
+    <a href="mailto:elycheikh@aicoredigital.com"><svg class="ico"><use href="#i-mail"/></svg><bdi class="ltr">elycheikh@aicoredigital.com</bdi></a> ·
+    <a href="https://aicoredigital.com" target="_blank" rel="noopener"><svg class="ico"><use href="#i-globe"/></svg><bdi class="ltr">aicoredigital.com</bdi></a>
+  </p>
+</footer>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<div id="report" class="report-ov" role="dialog" aria-modal="true" aria-labelledby="rp-h" hidden>
+  <div class="report-bar no-print">
+    <button class="btn btn-primary btn-sm" id="rp-print" type="button"><svg class="ico"><use href="#i-print"/></svg><span data-i18n="rp_print"></span></button>
+    <button class="btn btn-ghost btn-sm" id="rp-dl" type="button"><svg class="ico"><use href="#i-down"/></svg><span data-i18n="rp_download"></span></button>
+    <button class="btn btn-ghost btn-sm" id="rp-close" type="button"><svg class="ico"><use href="#i-x"/></svg><span data-i18n="rp_close"></span></button>
+  </div>
+  <article class="paper" id="paper"></article>
+</div>
+
+<script src="js/i18n3d.js"></script>
+<script src="js/nlp.js"></script>
+<script type="module" src="js/app3d.js"></script>
+</body>
+</html>

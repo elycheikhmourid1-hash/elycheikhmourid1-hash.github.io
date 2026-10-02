@@ -16,7 +16,12 @@
   }
   function p2(n) { return (n < 10 ? '0' : '') + n; }
   function fTime(ts) { var d = new Date(ts); return p2(d.getHours()) + ':' + p2(d.getMinutes()) + ':' + p2(d.getSeconds()); }
-  function fDT(ts) { var d = new Date(ts); return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()) + ' ' + fTime(ts); }
+  /* ONE clock everywhere (header, cards, audit log, CSV, report): browser local time + a visible timezone label. */
+  var TZF = (window.Intl && Intl.DateTimeFormat) ? new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' }) : null;
+  function tzAbbr(ts) { try { var p = TZF.formatToParts(new Date(ts)).filter(function (x) { return x.type === 'timeZoneName'; })[0]; return p ? p.value : 'UTC'; } catch (e) { return 'UTC'; } }
+  function tzName() { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { return ''; } }
+  function fClock(ts) { return fTime(ts) + ' ' + tzAbbr(ts); }
+  function fDT(ts) { var d = new Date(ts); return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()) + ' ' + fClock(ts); }
   function ltr(s) { return '<bdi class="ltr">' + esc(s) + '</bdi>'; }
   function svgEl(tag, attrs) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); return e; }
   function siteDef(id) { return D.sites.filter(function (s) { return s.id === id; })[0]; }
@@ -105,7 +110,7 @@
   function proposeMission(tpl, site) {
     var r = pickRobot(site) || anyRobot(site);
     var m = mkMission(tpl, site, 'manual', null, null, r.id);
-    addLog('system', 'propose', { id: m.id, tpl: tpl, site: site, robot: r.id });
+    addLog('system', 'propose', { id: m.id, tpl: tpl, site: site, robot: r.id }, m.tProposed);
     return m;
   }
   function startMission(m, by) {
@@ -113,7 +118,7 @@
     if (!r) { addLog('system', 'noaction', { site: m.site }); toast(t('no_robot_avail')); return false; }
     m.robot = r.id; m.status = 'running'; m.tDecided = m.tStart = Date.now(); m.by = by;
     r.state = 'mission';
-    addLog('robot:' + r.id, 'start', { id: m.id, site: m.site });
+    addLog('robot:' + r.id, 'start', { id: m.id, site: m.site }, m.tStart);
     return true;
   }
   function approveMission(id) {
@@ -122,22 +127,22 @@
     if (!startMission(m, by)) return;
     // log order: approval first, then robot start
     var st = S.log.shift();
-    addLog(by, 'approve', { id: m.id, tpl: m.tpl, site: m.site });
+    addLog(by, 'approve', { id: m.id, tpl: m.tpl, site: m.site }, m.tDecided);
     S.log.unshift(st);
     toast(t('toast_approved')); afterChange();
   }
   function rejectMission(id) {
     var m = S.missions.filter(function (x) { return x.id === id; })[0]; if (!m || m.status !== 'awaiting') return;
     m.status = 'rejected'; m.tDecided = Date.now(); m.by = 'op:' + S.op;
-    addLog(m.by, 'reject', { id: m.id, tpl: m.tpl, site: m.site });
+    addLog(m.by, 'reject', { id: m.id, tpl: m.tpl, site: m.site }, m.tDecided);
     toast(t('toast_rejected')); afterChange();
   }
   function completeMission(m) {
     m.status = 'done'; m.tEnd = Date.now(); m.elapsed = m.total; m.findings = genFindings(m.tpl, m.alertType);
     var r = S.robots.filter(function (x) { return x.id === m.robot; })[0];
     if (r) r.state = r.batt < 30 ? 'returning' : 'patrol';
-    addLog('robot:' + m.robot, 'complete', { id: m.id });
-    addLog('system', 'report', { id: m.id });
+    addLog('robot:' + m.robot, 'complete', { id: m.id }, m.tEnd);
+    addLog('system', 'report', { id: m.id }, m.tEnd);
     toast(t('toast_done'));
   }
 
@@ -160,14 +165,14 @@
     if (!startMission(m, 'op:' + S.op)) { S.missions.shift(); S.nextM--; return; }
     S.log.shift(); // drop robot 'start' so the human decision is logged first
     a.status = 'dispatched'; a.missionId = m.id; a.by = 'op:' + S.op; a.tDecided = Date.now();
-    addLog(a.by, 'dispatch', { id: a.id, robot: m.robot, id2: m.id });
-    addLog('robot:' + m.robot, 'start', { id: m.id, site: m.site });
+    addLog(a.by, 'dispatch', { id: a.id, robot: m.robot, id2: m.id }, a.tDecided);
+    addLog('robot:' + m.robot, 'start', { id: m.id, site: m.site }, m.tStart);
     toast(t('toast_approved')); afterChange();
   }
   function dismissAlert(id) {
     var a = S.alerts.filter(function (x) { return x.id === id; })[0]; if (!a || a.status !== 'open') return;
     a.status = 'dismissed'; a.by = 'op:' + S.op; a.tDecided = Date.now();
-    addLog(a.by, 'dismiss', { id: a.id }); toast(t('toast_dismissed')); afterChange();
+    addLog(a.by, 'dismiss', { id: a.id }, a.tDecided); toast(t('toast_dismissed')); afterChange();
   }
 
   /* ---------- seed ---------- */
@@ -202,7 +207,7 @@
       if (m.status === 'running') { m.elapsed += 1; if (m.elapsed >= m.total) { completeMission(m); done = true; } }
     });
     if (S.sim % 75 === 0 && S.alerts.filter(function (a) { return a.status === 'open'; }).length < 3) { nextAlert(true); }
-    $('#clock').textContent = fTime(Date.now());
+    $('#clock').textContent = fClock(Date.now());
     if (done) afterChange(); else { updateProgress(); renderKpis(); renderRobotList(); }
     if (reduced) { stepRobots(1); updatePositions(); }
   }
@@ -271,7 +276,7 @@
         '<text class="mlabel" x="' + (x + s.lx) + '" y="' + (y + s.ly) + '" text-anchor="middle">' + esc(nm) + '</text></g>';
     });
     S.robots.forEach(function (r) { h += '<g class="mbot" id="mr-' + r.id + '"><circle r="4.2" class="mbot-c"/></g>'; });
-    h += '<text class="sea" x="30" y="180">' + (lang === 'ar' ? 'المحيط الأطلسي' : 'Océan Atlantique') + '</text>';
+    h += '<text class="sea" x="30" y="180">' + (lang === 'ar' ? 'المحيط الأطلسي' : lang === 'en' ? 'Atlantic Ocean' : 'Océan Atlantique') + '</text>';
     svg.innerHTML = h;
     $$('.msite', svg).forEach(function (el) {
       el.addEventListener('click', function () { selectSite(el.getAttribute('data-site')); });
@@ -386,11 +391,11 @@
       h += stepsHTML(m) + '<p class="hint tiny">' + esc(t('hint_awaiting')) + '</p><div class="acts"><button class="btn btn-primary" type="button" data-approve="' + m.id + '"><svg class="ico"><use href="#i-check"/></svg>' + esc(t('approve')) + '</button>' +
         '<button class="btn btn-ghost" type="button" data-reject="' + m.id + '"><svg class="ico"><use href="#i-x"/></svg>' + esc(t('reject')) + '</button></div>';
     } else if (m.status === 'running') {
-      h += stepsHTML(m) + '<div class="bar"><span data-mp="' + m.id + '" style="width:' + Math.round(m.elapsed / m.total * 100) + '%"></span></div><p class="tiny muted">' + esc(t('approved_by')) + ': ' + esc(actorText(m.by)) + ' · ' + ltr(fTime(m.tDecided)) + '</p>';
+      h += stepsHTML(m) + '<div class="bar"><span data-mp="' + m.id + '" style="width:' + Math.round(m.elapsed / m.total * 100) + '%"></span></div><p class="tiny muted">' + esc(t('approved_by')) + ': ' + esc(actorText(m.by)) + ' · ' + ltr(fClock(m.tDecided)) + '</p>';
     } else if (m.status === 'done') {
-      h += '<p class="tiny muted">' + esc(t('approved_by')) + ': ' + esc(actorText(m.by)) + ' · ' + ltr(fTime(m.tDecided)) + '</p><div class="acts"><button class="btn btn-ghost" type="button" data-report="' + m.id + '"><svg class="ico"><use href="#i-print"/></svg>' + esc(t('view_report')) + '</button></div>';
+      h += '<p class="tiny muted">' + esc(t('approved_by')) + ': ' + esc(actorText(m.by)) + ' · ' + ltr(fClock(m.tDecided)) + '</p><div class="acts"><button class="btn btn-ghost" type="button" data-report="' + m.id + '"><svg class="ico"><use href="#i-print"/></svg>' + esc(t('view_report')) + '</button></div>';
     } else {
-      h += '<p class="tiny muted">' + esc(t('rejected_by')) + ': ' + esc(actorText(m.by)) + ' · ' + ltr(fTime(m.tDecided)) + '</p>';
+      h += '<p class="tiny muted">' + esc(t('rejected_by')) + ': ' + esc(actorText(m.by)) + ' · ' + ltr(fClock(m.tDecided)) + '</p>';
     }
     return h + '</article>';
   }
@@ -419,12 +424,12 @@
   function alertCard(a) {
     var open = a.status === 'open', robot = a.robot;
     var h = '<article class="card alert sev-' + a.sev + (open ? '' : ' closed') + '" data-a="' + a.id + '"><header><span class="chip sev">' + esc(t('sev.' + a.sev)) + '</span><b>' + esc(t('al.' + a.type + '.title')) + '</b>' +
-      '<span class="tiny muted">' + esc(t('site.' + a.site)) + ' · ' + ltr(fTime(a.ts)) + ' · ' + ltr(a.id) + '</span></header>' +
+      '<span class="tiny muted">' + esc(t('site.' + a.site)) + ' · ' + ltr(fClock(a.ts)) + ' · ' + ltr(a.id) + '</span></header>' +
       '<p class="small">' + esc(t('al.' + a.type + '.detail', { v: a.v })) + '</p>' +
       '<div class="draft"><h4><svg class="ico"><use href="#i-bolt"/></svg>' + esc(t('al_draft')) + '</h4><p>' + esc(t('al.' + a.type + '.draft', { robot: robot })) + '</p>';
     if (open) h += '<p class="tiny muted">' + esc(t('al_draft_note')) + '</p><div class="acts"><button class="btn btn-primary" type="button" data-aa="' + a.id + '"><svg class="ico"><use href="#i-check"/></svg>' + esc(t('al_approve')) + '</button>' +
       '<button class="btn btn-ghost" type="button" data-ad="' + a.id + '">' + esc(t('al_dismiss')) + '</button></div>';
-    else h += '<p class="tiny ' + (a.status === 'dispatched' ? 'ok-t' : 'muted') + '">' + esc(t(a.status === 'dispatched' ? 'al_st_dispatched' : 'al_st_dismissed')) + ' — ' + esc(actorText(a.by)) + ' · ' + ltr(fTime(a.tDecided)) + (a.missionId ? ' · ' + ltr(a.missionId) : '') + '</p>';
+    else h += '<p class="tiny ' + (a.status === 'dispatched' ? 'ok-t' : 'muted') + '">' + esc(t(a.status === 'dispatched' ? 'al_st_dispatched' : 'al_st_dismissed')) + ' — ' + esc(actorText(a.by)) + ' · ' + ltr(fClock(a.tDecided)) + (a.missionId ? ' · ' + ltr(a.missionId) : '') + '</p>';
     return h + '</div></article>';
   }
   function renderAlerts() {
@@ -477,7 +482,7 @@
       '<tr><th scope="row">' + esc(t('rp_approved')) + '</th><td>' + esc(actorText(m.by)) + ' · ' + ltr(fDT(m.tDecided)) + '</td></tr>' +
       '<tr><th scope="row">' + esc(t('rp_started')) + '</th><td>' + ltr(fDT(m.tStart)) + '</td></tr>' +
       '<tr><th scope="row">' + esc(t('rp_completed')) + '</th><td>' + ltr(fDT(m.tEnd)) + '</td></tr></tbody></table>' +
-      '<p class="rp-disc">' + esc(t('rp_disclaimer')) + '</p><p class="rp-foot">AICore Digital LLC · Richmond, VA · aicoredigital.com · +1 804 485 3384</p>';
+      '<p class="rp-disc">' + esc(t('rp_disclaimer')) + '<br>' + esc(t('rp_clock', { tz: tzAbbr(m.tEnd) + (tzName() ? ' (' + tzName() + ')' : '') })) + '</p><p class="rp-foot">AICore Digital LLC · Richmond, VA · aicoredigital.com · +1 804 485 3384</p>';
   }
   function openReport(id, opener) {
     var m = S.missions.filter(function (x) { return x.id === id; })[0]; if (!m || m.status !== 'done') return;
@@ -526,6 +531,7 @@
     $$('[data-i18n-aria]').forEach(function (e) { e.setAttribute('aria-label', t(e.getAttribute('data-i18n-aria'))); });
     $('#lang-t').textContent = L.lang_btn; $('#lang').setAttribute('aria-label', L.lang_aria);
     $('#wa').href = waHref();
+    $$('[data-3d]').forEach(function (e) { e.href = '3d/?lang=' + lang; });
     var sel = $('#op'); sel.innerHTML = D.ops.map(function (o) { return '<option value="' + o + '">' + esc(opName(o)) + '</option>'; }).join(''); sel.value = S.op;
     sel.setAttribute('aria-label', t('operator'));
   }
@@ -543,11 +549,11 @@
   /* ---------- init ---------- */
   function resetDemo() { S = freshState(); seed(); renderAll(); route(); toast(t('toast_reset')); }
   function init() {
-    var q = /[?&]lang=(ar|fr)/.exec(location.search), saved = null;
+    var q = /[?&]lang=(ar|fr|en)/.exec(location.search), saved = null;
     try { saved = localStorage.getItem('aicore-robots-lang'); } catch (e) {}
-    lang = q ? q[1] : (saved === 'fr' || saved === 'ar' ? saved : 'ar');
+    lang = q ? q[1] : (saved === 'fr' || saved === 'ar' || saved === 'en' ? saved : 'ar');
     S = freshState(); buildRoutes(); seed(); renderAll();
-    $('#lang').addEventListener('click', function () { setLang(lang === 'ar' ? 'fr' : 'ar'); });
+    $('#lang').addEventListener('click', function () { setLang(lang === 'ar' ? 'fr' : lang === 'fr' ? 'en' : 'ar'); });
     $('#op').addEventListener('change', function (e) { S.op = e.target.value; });
     $('#reset').addEventListener('click', resetDemo);
     $('#sim-alert').addEventListener('click', function () { nextAlert(false); });
@@ -558,7 +564,7 @@
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('#report').hidden) closeReport(); });
     window.addEventListener('hashchange', route);
     document.addEventListener('visibilitychange', function () { if (document.hidden) stopLoop(); else if (S.route === 'dashboard') startLoop(); });
-    route(); setInterval(tick, 1000); $('#clock').textContent = fTime(Date.now());
+    route(); setInterval(tick, 1000); $('#clock').textContent = fClock(Date.now());
     window.__demo = { state: function () { return S; }, lang: function () { return lang; } }; // read-only handle for the test script
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();

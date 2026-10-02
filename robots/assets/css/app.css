@@ -249,3 +249,10 @@ body.rp-open { overflow: hidden; }
   .tbl td[data-l="Actor"]::before { content: none; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } .fb.pulse, .link.pulse { opacity: .5; } }
+
+/* link to the 3D version */
+.nav-3d { border: 1px dashed var(--purple); }
+.cta3d { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 18px; margin-block: 0 16px; text-decoration: none; color: var(--ink); border-color: rgba(162, 74, 255, .5); }
+.cta3d > .ico { width: 30px; height: 30px; color: var(--purple-2); }
+.cta3d > div { flex: 1; min-width: 220px; } .cta3d b { display: block; font-size: 16px; } .cta3d p { color: var(--ink-2); font-size: 13.5px; margin-top: 2px; }
+.cta3d:hover { border-color: var(--cyan); }
