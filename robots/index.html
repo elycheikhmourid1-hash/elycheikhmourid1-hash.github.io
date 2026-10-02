@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#06060d">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="AICore Robotics Ops — SIMULATION. Supervised robot-fleet console: the robot proposes, the human decides.">
+<title>عمليات الروبوتات — AICore | عرض تجريبي</title>
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+<!-- icon sprite -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-dash" viewBox="0 0 24 24"><path d="M3 3h8v8H3zM13 3h8v5h-8zM13 11h8v10h-8zM3 13h8v8H3z"/></symbol>
+    <symbol id="i-mission" viewBox="0 0 24 24"><path d="M9 3h6v3H9zM7 4.5H5V21h14V4.5h-2M9 14l2 2 4-4.5"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l10 18H2zM12 10v5M12 18v.01"/></symbol>
+    <symbol id="i-log" viewBox="0 0 24 24"><path d="M5 3h14v18H5zM8 8h8M8 12h8M8 16h5"/></symbol>
+    <symbol id="i-road" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l5 5 9-10"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 3v12M7 11l5 5 5-5M4 21h16"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L5 14h6l-1 8 8-12h-6z"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4"/></symbol>
+    <symbol id="i-robot" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="11" rx="4"/><path d="M12 8V4M9 13v.01M15 13v.01"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M6 3h4l2 5-2.5 1.5a11 11 0 0 0 5 5L16 12l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 6.5l9 7 9-7"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3.5 3.5 3.5 14.5 0 18M12 3c-3.5 3.5-3.5 14.5 0 18"/></symbol>
+    <symbol id="i-wa" viewBox="0 0 24 24"><path d="M4 20l1.3-4.2A8.5 8.5 0 1 1 8.2 18.8z"/><path d="M9.2 8.8c-.4 3 2.8 6.2 6 6l1-2-2-1-1 .8c-1-.5-1.8-1.3-2.3-2.3l.8-1-1-2z"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.5-5.8M4 4v5h5"/></symbol>
+    <symbol id="i-dish" viewBox="0 0 24 24"><path d="M5 9a9 9 0 0 0 10 10zM13 11l6-6M16 4l4 4M8 20h8"/></symbol>
+    <symbol id="i-therm" viewBox="0 0 24 24"><path d="M10 14V5a2 2 0 0 1 4 0v9a4 4 0 1 1-4 0zM12 9v7"/></symbol>
+    <symbol id="i-fence" viewBox="0 0 24 24"><path d="M4 21V8l2-3 2 3v13M10 21V8l2-3 2 3v13M16 21V8l2-3 2 3v13M3 12h18M3 17h18"/></symbol>
+    <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M4 17a8 8 0 1 1 16 0M12 17l4-5M7 17h1M16 17h1"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></symbol>
+  </defs>
+</svg>
+
+<!-- hidden route geometry (used to sample robot paths) -->
+<svg id="routes" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"></svg>
+
+<!-- background: glow grid + fiber-optic lines -->
+<div class="bg-grid" aria-hidden="true"></div>
+<svg class="bg-fiber" viewBox="0 0 1440 900" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="fg1" x1="0" x2="1"><stop offset="0" stop-color="#c21fdc"/><stop offset=".5" stop-color="#9810fa"/><stop offset="1" stop-color="#22d3ee"/></linearGradient>
+    <linearGradient id="fg2" x1="1" x2="0"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#a24aff"/></linearGradient>
+  </defs>
+  <path class="fb" stroke="url(#fg1)" d="M-40 700 C 280 560, 520 860, 820 640 S 1280 420, 1500 520"/>
+  <path class="fb pulse" stroke="url(#fg1)" d="M-40 700 C 280 560, 520 860, 820 640 S 1280 420, 1500 520"/>
+  <path class="fb" stroke="url(#fg2)" d="M-40 180 C 320 320, 560 40, 900 220 S 1300 360, 1500 140"/>
+  <path class="fb pulse p2" stroke="url(#fg2)" d="M-40 180 C 320 320, 560 40, 900 220 S 1300 360, 1500 140"/>
+  <path class="fb" stroke="url(#fg1)" d="M200 -30 C 320 260, 140 480, 360 930"/>
+  <path class="fb pulse p3" stroke="url(#fg1)" d="M200 -30 C 320 260, 140 480, 360 930"/>
+</svg>
+
+<a class="skip" href="#main" data-i18n="skip">تخطَّ إلى المحتوى</a>
+
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="#/dashboard" aria-label="AICore Robotics Ops">
+      <img src="assets/img/favicon.svg" width="38" height="38" alt="">
+      <span class="brand-t"><b data-i18n="app_title">عمليات الروبوتات — AICore</b><small data-i18n="app_sub"></small></span>
+    </a>
+    <nav class="tabs" id="nav" aria-label="Main">
+      <a href="#/dashboard" data-route="dashboard"><svg class="ico"><use href="#i-dash"/></svg><span data-i18n="nav_dashboard"></span></a>
+      <a href="#/missions" data-route="missions"><svg class="ico"><use href="#i-mission"/></svg><span data-i18n="nav_missions"></span><i class="dot" id="nb-missions" hidden></i></a>
+      <a href="#/alerts" data-route="alerts"><svg class="ico"><use href="#i-alert"/></svg><span data-i18n="nav_alerts"></span><i class="dot" id="nb-alerts" hidden></i></a>
+      <a href="#/audit" data-route="audit"><svg class="ico"><use href="#i-log"/></svg><span data-i18n="nav_audit"></span></a>
+      <a href="#/roadmap" data-route="roadmap"><svg class="ico"><use href="#i-road"/></svg><span data-i18n="nav_roadmap"></span></a>
+    </nav>
+    <button class="btn btn-ghost btn-sm lang" id="lang" type="button"><svg class="ico"><use href="#i-globe"/></svg><span id="lang-t"></span></button>
+  </div>
+  <div class="console">
+    <label class="op"><span data-i18n="operator">المشغّل</span>
+      <select id="op"></select></label>
+    <span class="clock"><span data-i18n="clock"></span> <bdi class="ltr" id="clock">--:--:--</bdi></span>
+    <button class="btn btn-ghost btn-sm" id="reset" type="button"><svg class="ico"><use href="#i-reset"/></svg><span data-i18n="reset"></span></button>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+  <!-- DASHBOARD -->
+  <section class="view" id="v-dashboard" data-view="dashboard" aria-labelledby="h-dash">
+    <div class="vh"><h1 id="h-dash" data-i18n="dash_title"></h1><p class="lead" data-i18n="dash_lead"></p></div>
+    <div class="kpis" id="kpis"></div>
+    <div class="dash-grid">
+      <div class="card map-card">
+        <div class="ch"><h2 data-i18n="map_title"></h2><span class="tiny muted" data-i18n="map_note"></span></div>
+        <div class="map-wrap"><svg id="map" viewBox="0 0 640 640" role="group" focusable="false"></svg></div>
+        <ul class="legend tiny">
+          <li><i class="lg ok"></i><span data-i18n="legend_ok"></span></li><li><i class="lg att"></i><span data-i18n="legend_att"></span></li>
+          <li><i class="lg mis"></i><span data-i18n="legend_mis"></span></li><li><i class="lg link"></i><span data-i18n="legend_link"></span></li>
+        </ul>
+      </div>
+      <div class="card plan-card">
+        <div class="ch"><h2 data-i18n="plan_title"></h2></div>
+        <div class="site-tabs" id="site-tabs" role="group" data-i18n-aria="sites_tabs"></div>
+        <div class="plan-head" id="plan-head"></div>
+        <div class="plan-wrap"><svg id="plan" viewBox="0 0 400 260" role="img" focusable="false"></svg></div>
+        <h3 class="sub" data-i18n="robots_here"></h3>
+        <div id="robot-list" class="rlist"></div>
+      </div>
+    </div>
+    <div id="roles-dash"></div>
+  </section>
+
+  <!-- MISSIONS -->
+  <section class="view" id="v-missions" data-view="missions" aria-labelledby="h-mi" hidden>
+    <div class="vh"><h1 id="h-mi" data-i18n="mi_title"></h1><p class="lead" data-i18n="mi_lead"></p></div>
+    <h2 class="sec" data-i18n="mi_templates"></h2>
+    <div class="tpl-grid" id="tpl-grid"></div>
+    <h2 class="sec" data-i18n="mi_board"></h2>
+    <div id="board" class="board"></div>
+  </section>
+
+  <!-- ALERTS -->
+  <section class="view" id="v-alerts" data-view="alerts" aria-labelledby="h-al" hidden>
+    <div class="vh vh-row">
+      <div><h1 id="h-al" data-i18n="al_title"></h1><p class="lead" data-i18n="al_lead"></p></div>
+      <button class="btn btn-primary" id="sim-alert" type="button"><svg class="ico"><use href="#i-plus"/></svg><span data-i18n="al_sim"></span></button>
+    </div>
+    <div id="alerts" class="alerts"></div>
+  </section>
+
+  <!-- AUDIT -->
+  <section class="view" id="v-audit" data-view="audit" aria-labelledby="h-au" hidden>
+    <div class="vh vh-row">
+      <div><h1 id="h-au" data-i18n="au_title"></h1><p class="lead" data-i18n="au_lead"></p></div>
+      <button class="btn btn-ghost" id="csv" type="button"><svg class="ico"><use href="#i-down"/></svg><span data-i18n="au_csv"></span></button>
+    </div>
+    <div class="chips" id="au-filter" role="group"></div>
+    <div class="card tbl-card"><table class="tbl" id="au-table"></table></div>
+    <div id="roles-audit"></div>
+  </section>
+
+  <!-- ROADMAP -->
+  <section class="view" id="v-roadmap" data-view="roadmap" aria-labelledby="h-rm" hidden>
+    <div class="vh"><h1 id="h-rm" data-i18n="rm_title"></h1><p class="lead" data-i18n="rm_lead"></p></div>
+    <div id="roadmap"></div>
+  </section>
+</main>
+
+<footer class="contact" id="contact">
+  <div class="contact-in card">
+    <div class="ct-main">
+      <h2 data-i18n="ct_title"></h2>
+      <p class="muted" data-i18n="ct_role"></p>
+      <p class="tiny muted" data-i18n="ct_note"></p>
+    </div>
+    <ul class="ct-list">
+      <li><a class="btn btn-wa" id="wa" href="https://wa.me/18044853384" target="_blank" rel="noopener"><svg class="ico"><use href="#i-wa"/></svg><span data-i18n="ct_wa"></span> <bdi class="ltr">+1 804 485 3384</bdi></a></li>
+      <li><a href="mailto:elycheikh@aicoredigital.com"><svg class="ico"><use href="#i-mail"/></svg><span class="ltr">elycheikh@aicoredigital.com</span></a></li>
+      <li><a href="tel:+18044853384"><svg class="ico"><use href="#i-phone"/></svg><span class="ltr">+1 804 485 3384</span></a></li>
+      <li><a href="https://aicoredigital.com" target="_blank" rel="noopener"><svg class="ico"><use href="#i-globe"/></svg><span class="ltr">aicoredigital.com</span></a></li>
+    </ul>
+  </div>
+  <p class="tiny muted copy">© AICore Digital LLC · Richmond, VA</p>
+</footer>
+
+<!-- persistent simulation badge -->
+<div class="sim-badge" role="status"><i class="pulse-dot"></i><span data-i18n="badge" dir="auto">SIMULATION / عرض تجريبي - بيانات افتراضية</span></div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<!-- report overlay (print target) -->
+<div id="report" class="report-ov" role="dialog" aria-modal="true" aria-labelledby="rp-h" hidden>
+  <div class="report-bar no-print">
+    <button class="btn btn-primary btn-sm" id="rp-print" type="button"><svg class="ico"><use href="#i-print"/></svg><span data-i18n="rp_print"></span></button>
+    <button class="btn btn-ghost btn-sm" id="rp-dl" type="button"><svg class="ico"><use href="#i-down"/></svg><span data-i18n="rp_download"></span></button>
+    <button class="btn btn-ghost btn-sm" id="rp-close" type="button"><svg class="ico"><use href="#i-x"/></svg><span data-i18n="rp_close"></span></button>
+  </div>
+  <article class="paper" id="paper"></article>
+</div>
+
+<script src="assets/js/i18n.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
