@@ -9,6 +9,7 @@
 <title>عمليات الروبوتات — AICore | عرض تجريبي</title>
 <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/css/app.css">
+<link rel="stylesheet" href="assets/css/live.css">
 </head>
 <body>
 <!-- icon sprite -->
@@ -81,6 +82,11 @@
       <select id="op"></select></label>
     <span class="clock"><span data-i18n="clock"></span> <bdi class="ltr" id="clock">--:--:--</bdi></span>
     <button class="btn btn-ghost btn-sm" id="reset" type="button"><svg class="ico"><use href="#i-reset"/></svg><span data-i18n="reset"></span></button>
+    <div class="lv-legend" id="legend" role="group" data-i18n-aria="lv_legend_title">
+      <b data-i18n="lv_legend_title"></b>
+      <span class="lg"><span class="live-badge"><i></i>LIVE / حي</span><span data-i18n="lv_legend_live"></span></span>
+      <span class="lg"><span class="sim-tag" data-i18n="lv_sim_tag"></span><span data-i18n="lv_legend_sim"></span></span>
+    </div>
   </div>
 </header>
 
@@ -90,6 +96,18 @@
     <div class="vh"><h1 id="h-dash" data-i18n="dash_title"></h1><p class="lead" data-i18n="dash_lead"></p></div>
     <a class="card cta3d" href="3d/" data-3d><svg class="ico"><use href="#i-robot"/></svg><div><b data-i18n="d3_t"></b><p data-i18n="d3_b"></p></div><span class="btn btn-primary btn-sm" data-i18n="d3_cta"></span></a>
     <div class="kpis" id="kpis"></div>
+    <section class="card wx-sec" id="wx-sec" aria-labelledby="wx-h">
+      <div class="wx-head">
+        <h2 id="wx-h"><span data-i18n="lv_wx_title"></span> <span class="live-badge"><i></i>LIVE / حي</span></h2>
+        <div class="wx-tools">
+          <label><span data-i18n="lv_wx_thr"></span><input type="number" id="wx-thr" min="5" max="150" step="1" inputmode="numeric"></label>
+          <button class="btn btn-ghost btn-sm" id="wx-refresh" type="button"><svg class="ico"><use href="#i-reset"/></svg><span data-i18n="lv_wx_refresh"></span></button>
+        </div>
+      </div>
+      <div class="wx-cards" id="wx-cards"></div>
+      <p class="tiny muted wx-note" data-i18n="lv_wx_src"></p>
+      <p class="tiny muted wx-note" data-i18n="lv_wx_thr_note"></p>
+    </section>
     <div class="dash-grid">
       <div class="card map-card">
         <div class="ch"><h2 data-i18n="map_title"></h2><span class="tiny muted" data-i18n="map_note"></span></div>
@@ -180,6 +198,8 @@
 </div>
 
 <script src="assets/js/i18n.js"></script>
+<script src="assets/js/i18n-live.js"></script>
+<script src="assets/js/weather.js"></script>
 <script src="assets/js/data.js"></script>
 <script src="assets/js/app.js"></script>
 </body>
