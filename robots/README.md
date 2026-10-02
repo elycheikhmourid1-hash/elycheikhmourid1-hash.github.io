@@ -9,3 +9,9 @@ Static, bilingual (Arabic RTL default / French) demo of a human-supervised robot
 - Fonts (Inter, Tajawal, Space Grotesk) are bundled locally under SIL OFL (`assets/fonts/OFL.txt`).
 
 AICore Digital LLC · https://aicoredigital.com · elycheikh@aicoredigital.com · +1 804 485 3384
+
+## 3D version (`3d/`)
+
+`3d/` is a Three.js (r160, vendored in `3d/vendor/`, no CDN) version of the same simulation, built for presenting on a big screen (Zoom / projector): a procedural VSAT ground station, two procedural quadruped robots (R-01 / R-02), human-in-the-loop missions, a rule-based Arabic/French/English command box (no AI, no backend), simulated alerts and printable reports.
+Languages: AR (default, RTL) / FR / EN (`?lang=ar|fr|en`). Served at `/robots/3d/`. Needs to be served over http(s) (ES modules), e.g. `python3 -m http.server`.
+Presenter guide (Arabic) is kept outside the repo. All timestamps (header clock, audit log, CSV, reports) use one clock: browser local time with a visible timezone label.
