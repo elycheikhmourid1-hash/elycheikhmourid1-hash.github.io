@@ -1,7 +1,9 @@
-/* AICore Robotics Ops — simulation-only demo. Everything runs in the browser; no network calls, no storage of operator data. */
+/* AICore Robotics Ops — demo. Simulation (fictional sites/robots) + LIVE weather. Runs in the browser; the ONLY network call is Open-Meteo (assets/js/weather.js). No storage of operator data. */
 (function () {
   'use strict';
-  var D = window.DATA, I = window.I18N;
+  var D = window.DATA, I = window.I18N, WX = window.WX;
+  /* site -> LIVE weather city (the demo sites are fictional; the weather is real for the nearest city) */
+  var WX_OF = { gs: 'nkc', wh: 'nkc', tw: 'atr', en: 'nou' }, WX_DISH_SITES = ['gs', 'tw'];
   var NS = 'http://www.w3.org/2000/svg';
   var reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   var lang = 'ar', S = null, samples = {}, rafId = 0, lastFrame = 0;
@@ -175,6 +177,44 @@
     addLog(a.by, 'dismiss', { id: a.id }, a.tDecided); toast(t('toast_dismissed')); afterChange();
   }
 
+  /* ---------- LIVE wind alerts (real Open-Meteo wind -> advisory -> drafted dish wind-load check, pending approval) ---------- */
+  function raiseLiveWind(siteId, v, thr) {
+    var r = pickRobot(siteId) || anyRobot(siteId); if (!r) return null;
+    var a = { id: 'A-' + (S.nextA++), type: 'wind', site: siteId, sev: 'medium', ts: Date.now(), v: String(Math.round(Math.max(v.wind || 0, 0))), thr: String(thr), robot: r.id, tpl: 'antenna', status: 'open', missionId: null, by: null, tDecided: null, live: true };
+    S.alerts.unshift(a);
+    addLog('system', 'alert', { id: a.id, type: 'wind', site: siteId }, a.ts);
+    addLog('system', 'draft', { id: a.id, tpl: 'antenna', robot: r.id }, a.ts);
+    toast(t('toast_alert')); return a;
+  }
+  function checkWind() {
+    if (!S) return;
+    var thr = WX.windThreshold(), changed = false;
+    WX_DISH_SITES.forEach(function (sid) {
+      var g = WX.get(WX_OF[sid]); S.windArm = S.windArm || {};
+      if (!g.ok) return;
+      var hot = WX.windExceeded(g.v, thr);
+      if (hot && !S.windArm[sid]) { S.windArm[sid] = true; raiseLiveWind(sid, g.v, thr); changed = true; }
+      else if (!hot) S.windArm[sid] = false;
+    });
+    if (changed) afterChange();
+  }
+
+  /* ---------- LIVE weather rendering ---------- */
+  function renderWeather() {
+    var host = $('#wx-cards'); if (!host) return;
+    var fmt = { clock: fClock };
+    host.innerHTML = WX.SITES.map(function (s) { return WX.renderCard(s.id, t, esc, fmt); }).join('');
+    var thr = $('#wx-thr'); if (thr && document.activeElement !== thr) thr.value = WX.windThreshold();
+    renderPlanWx();
+  }
+  function renderPlanWx() {
+    var host = $('#plan-wx'); if (!host || !S) return;
+    var id = WX_OF[S.sel], g = WX.get(id);
+    host.innerHTML = g.ok
+      ? '<span class="live-badge"><i></i>LIVE / حي</span> <span class="muted">' + esc(t('lv_wx_site_' + id)) + '</span> ' + ltr(WX.f1(g.v.temp) + ' °C') + ' · ' + ltr(WX.f0(g.v.wind) + ' km/h') + ' · ' + ltr(WX.f0(g.v.hum) + ' %')
+      : '<span class="na-badge">' + esc(t('lv_wx_unavail')) + '</span>';
+  }
+
   /* ---------- seed ---------- */
   function seed() {
     var now = Date.now();
@@ -270,7 +310,7 @@
     D.sites.forEach(function (s) {
       var x = s.at[0], y = s.at[1], nm = t('site.' + s.id);
       h += '<g class="msite s-ok" data-site="' + s.id + '" tabindex="0" role="button" aria-label="' + esc(nm) + '">' +
-        '<rect class="foot" x="' + (x - 34) + '" y="' + (y - 24) + '" width="68" height="48" rx="12"/>' +
+        '<rect class="hit" x="' + (x - 64) + '" y="' + (y - 26) + '" width="128" height="' + (s.ly + 34) + '"/><rect class="foot" x="' + (x - 34) + '" y="' + (y - 24) + '" width="68" height="48" rx="12"/>' +
         '<path class="mroute" d="' + D.plans[s.id].route + '" transform="translate(' + x + ' ' + y + ') scale(.16) translate(-200 -130)"/>' +
         '<circle class="ring" cx="' + x + '" cy="' + y + '" r="8"/><circle class="pin" cx="' + x + '" cy="' + y + '" r="4.5"/>' +
         '<text class="mlabel" x="' + (x + s.lx) + '" y="' + (y + s.ly) + '" text-anchor="middle">' + esc(nm) + '</text></g>';
@@ -301,7 +341,8 @@
   }
   function renderPlanHead() {
     var st = siteStatus(S.sel);
-    $('#plan-head').innerHTML = '<div><b>' + esc(t('site.' + S.sel)) + '</b><span class="muted tiny"> · ' + esc(t('sitetype.' + S.sel)) + '</span></div><span class="chip c-' + st + '">' + esc(stName(st)) + '</span>';
+    $('#plan-head').innerHTML = '<div><b>' + esc(t('site.' + S.sel)) + '</b><span class="muted tiny"> · ' + esc(t('sitetype.' + S.sel)) + '</span></div><span class="chip c-' + st + '">' + esc(stName(st)) + '</span><div class="wx-mini" id="plan-wx"></div>';
+    renderPlanWx();
     $$('#site-tabs .stab').forEach(function (b) { b.className = 'stab st-' + siteStatus(b.getAttribute('data-site')); b.setAttribute('aria-pressed', b.getAttribute('data-site') === S.sel); });
   }
   function renderPlan() {
@@ -423,9 +464,9 @@
   /* ---------- alerts view ---------- */
   function alertCard(a) {
     var open = a.status === 'open', robot = a.robot;
-    var h = '<article class="card alert sev-' + a.sev + (open ? '' : ' closed') + '" data-a="' + a.id + '"><header><span class="chip sev">' + esc(t('sev.' + a.sev)) + '</span><b>' + esc(t('al.' + a.type + '.title')) + '</b>' +
+    var h = '<article class="card alert sev-' + a.sev + (open ? '' : ' closed') + (a.live ? ' is-live' : '') + '" data-a="' + a.id + '"><header>' + (a.live ? '<span class="live-badge"><i></i>LIVE / حي</span>' : '<span class="sim-tag">' + esc(t('lv_sim_tag')) + '</span>') + '<span class="chip sev">' + esc(t('sev.' + a.sev)) + '</span><b>' + esc(t('al.' + a.type + '.title')) + '</b>' +
       '<span class="tiny muted">' + esc(t('site.' + a.site)) + ' · ' + ltr(fClock(a.ts)) + ' · ' + ltr(a.id) + '</span></header>' +
-      '<p class="small">' + esc(t('al.' + a.type + '.detail', { v: a.v })) + '</p>' +
+      '<p class="small">' + esc(t('al.' + a.type + '.detail', { v: a.v, thr: a.thr || '', site: t('lv_wx_site_' + (WX_OF[a.site] || 'nkc')) })) + '</p>' +
       '<div class="draft"><h4><svg class="ico"><use href="#i-bolt"/></svg>' + esc(t('al_draft')) + '</h4><p>' + esc(t('al.' + a.type + '.draft', { robot: robot })) + '</p>';
     if (open) h += '<p class="tiny muted">' + esc(t('al_draft_note')) + '</p><div class="acts"><button class="btn btn-primary" type="button" data-aa="' + a.id + '"><svg class="ico"><use href="#i-check"/></svg>' + esc(t('al_approve')) + '</button>' +
       '<button class="btn btn-ghost" type="button" data-ad="' + a.id + '">' + esc(t('al_dismiss')) + '</button></div>';
@@ -538,7 +579,7 @@
   function renderAll() {
     applyStatic(); buildMap(); renderSiteTabs(); renderPlanHead(); renderPlan(); renderRobotList(); renderKpis();
     $('#roles-dash').innerHTML = rolesHTML(); $('#roles-audit').innerHTML = rolesHTML();
-    renderTemplates(); renderBoard(); renderAlerts(); renderAudit(); renderRoadmap(); renderNavDots();
+    renderTemplates(); renderBoard(); renderAlerts(); renderAudit(); renderRoadmap(); renderNavDots(); renderWeather();
     if (openRid) { var m = S.missions.filter(function (x) { return x.id === openRid; })[0]; if (m) $('#paper').innerHTML = reportBody(m); }
   }
   function setLang(l) {
@@ -547,14 +588,19 @@
   }
 
   /* ---------- init ---------- */
-  function resetDemo() { S = freshState(); seed(); renderAll(); route(); toast(t('toast_reset')); }
+  function resetDemo() { S = freshState(); seed(); renderAll(); route(); toast(t('toast_reset')); checkWind(); }
   function init() {
     var q = /[?&]lang=(ar|fr|en)/.exec(location.search), saved = null;
     try { saved = localStorage.getItem('aicore-robots-lang'); } catch (e) {}
     lang = q ? q[1] : (saved === 'fr' || saved === 'ar' || saved === 'en' ? saved : 'ar');
     S = freshState(); buildRoutes(); seed(); renderAll();
     $('#lang').addEventListener('click', function () { setLang(lang === 'ar' ? 'fr' : lang === 'fr' ? 'en' : 'ar'); });
-    $('#op').addEventListener('change', function (e) { S.op = e.target.value; });
+    $('#op').addEventListener('change', function (e) { S.op = e.target.value; toast(t('lv_op_set', { n: opName(S.op, true) })); });
+    $('#wx-refresh').addEventListener('click', function () { toast(t('lv_wx_refreshing')); WX.fetchNow().then(function () { toast(WX.get('nkc').ok ? t('lv_wx_refreshed') : t('lv_wx_unavail')); }); });
+    $('#wx-thr').addEventListener('change', function (e) { WX.setWindThreshold(e.target.value); toast(t('lv_saved')); e.target.value = WX.windThreshold(); checkWind(); renderWeather(); });
+    WX.onChange(function () { renderWeather(); checkWind(); });
+    setInterval(renderWeather, 30000);
+    var q2 = /[?&]wxms=(\d+)/.exec(location.search); WX.start(q2 ? { refreshMs: +q2[1] } : {});
     $('#reset').addEventListener('click', resetDemo);
     $('#sim-alert').addEventListener('click', function () { nextAlert(false); });
     $('#csv').addEventListener('click', exportCsv);

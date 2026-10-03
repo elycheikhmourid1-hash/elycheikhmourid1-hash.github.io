@@ -1,5 +1,5 @@
 /* AICore Robotics Ops 3D — Three.js scene (SIMULATION). Procedural VSAT ground station + procedural quadruped robots.
-   Everything is generated in code: no external models, textures or network requests. */
+   Everything is generated in code: no external models or textures and the scene makes no network requests. The dish orientation follows the geometry-computed look angles. */
 import * as THREE from '../vendor/three.module.min.js';
 import { OrbitControls } from '../vendor/OrbitControls.js';
 
@@ -178,10 +178,12 @@ export async function createScene(container, opts = {}) {
     strut.position.copy(p1).add(p2).multiplyScalar(0.5); strut.scale.y = p1.distanceTo(p2); strut.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), p2.clone().sub(p1).normalize()); dishTilt.add(strut); }
   const feed = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.17, 0.34, 16), new THREE.MeshStandardMaterial({ color: 0x151530, metalness: 0.7, roughness: 0.3 })); feed.position.y = feedY; dishTilt.add(feed);
   const feedLed = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), new THREE.MeshBasicMaterial({ color: 0x34d399 })); feedLed.position.y = feedY + 0.22; dishTilt.add(feedLed);
-  const DISH_EL = 42 * Math.PI / 180;
-  dishTilt.rotation.x = Math.PI / 2 - DISH_EL;      // bowl axis → (0, sin el, cos el)
-  const DISH_AZ0 = -0.55;
-  azGroup.rotation.y = DISH_AZ0;
+  /* Pointing: scene north = −Z, east = +X. Compass azimuth az (clockwise from north) ↔ azGroup.rotation.y = π − az. Elevation el ↔ dishTilt.rotation.x = π/2 − el.
+     The initial values are only a neutral parked pose; app3d.js calls setDishPointing() with the geometry-computed look angles (assets/js/geo.js). */
+  const D2R = Math.PI / 180;
+  let dishAz = Math.PI - 180 * D2R, dishEl = 42 * D2R, dishAzT = dishAz, dishElT = dishEl;     // current / target (radians)
+  dishTilt.rotation.x = Math.PI / 2 - dishEl;      // bowl axis → (0, sin el, cos el)
+  azGroup.rotation.y = dishAz;
   const dishAnchor = new THREE.Vector3(LAYOUT.dish.x, 5.7, LAYOUT.dish.z);
   const dishCenter = new THREE.Vector3(LAYOUT.dish.x, 4.7, LAYOUT.dish.z);
 
@@ -367,6 +369,8 @@ export async function createScene(container, opts = {}) {
     setNight(v) { nightTarget = v ? 1 : 0; },
     setDriftAmp(v) { driftAmp = v; },
     dishAzimuth() { return azGroup.rotation.y; },
+    setDishPointing(azDeg, elDeg) { dishAzT = Math.PI - azDeg * D2R; dishElT = Math.max(0, Math.min(90, elDeg)) * D2R; },
+    dishPointing() { const az = ((180 - (dishAz * 180 / Math.PI)) % 360 + 360) % 360; return { az, el: dishEl * 180 / Math.PI, target: { az: (((180 - dishAzT * 180 / Math.PI) % 360) + 360) % 360, el: dishElT * 180 / Math.PI } }; },
     setCinematic(v) { cinematic = !!v; controls.autoRotate = cinematic; },
     get cinematic() { return cinematic; },
     follow(id) { followId = id; tween = null; },
@@ -410,8 +414,9 @@ export async function createScene(container, opts = {}) {
     hemi.intensity = 0.75 - 0.5 * nightAmt; sun.intensity = 1.25 - 1.0 * nightAmt; scene.background.copy(dayCol).lerp(nightCol, nightAmt); scene.fog.color.copy(scene.background);
     for (const id in robots) robots[id].headlight.intensity = nightAmt > 0.4 && robots[id].mode !== 'docked' ? 220 * nightAmt : 0;
     /* dish tracking wobble (ambient drift) */
+    { let da = dishAzT - dishAz; da = Math.atan2(Math.sin(da), Math.cos(da)); dishAz += da * Math.min(1, dt * 2.2); dishEl += (dishElT - dishEl) * Math.min(1, dt * 2.2); dishTilt.rotation.x = Math.PI / 2 - dishEl; }
     const wob = Math.sin(t * 0.35) * driftAmp + Math.sin(t * 0.9) * driftAmp * 0.4;
-    azGroup.rotation.y = DISH_AZ0 + (locked ? 0 : wob * (driftAmp > 0.03 ? 6 : 3));
+    azGroup.rotation.y = dishAz + (locked ? 0 : wob * (driftAmp > 0.03 ? 6 : 3));
     feedLed.material.color.set(driftAmp > 0.03 && !locked ? 0xfbbf24 : 0x34d399);
     /* leds + fibers */
     leds.forEach(l => { const on = Math.sin(t * 3 + l.userData.phase) > -0.3; l.material.color.set(on ? l.userData.col : 0x111122); });

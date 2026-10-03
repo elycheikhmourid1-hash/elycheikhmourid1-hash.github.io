@@ -9,6 +9,7 @@
 <title>عمليات الروبوتات ثلاثي الأبعاد — AICore | عرض تجريبي</title>
 <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="app3d.css">
+<link rel="stylesheet" href="../assets/css/live.css">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -62,7 +63,13 @@
     <button type="button" id="cam-follow" aria-pressed="false"><span data-i18n="cam_follow"></span></button>
     <button type="button" id="cam-cine" aria-pressed="false"><svg class="ico"><use href="#i-orbit"/></svg><span data-i18n="cam_cine"></span></button>
   </div>
-  <div id="heat-legend" class="heat-legend" hidden><b data-i18n="heat_legend"></b><i></i><span><bdi class="ltr">30 °C</bdi><bdi class="ltr">70 °C</bdi></span></div>
+  <div id="vtl" class="vtl">
+    <div id="livebar" class="livebar" role="status" aria-label="LIVE / SIMULATION">
+      <div class="lb-legend"><span class="live-badge" title="" id="lb-live"><i></i>LIVE / حي</span><span class="lb-t" data-i18n="lv_legend_live_s"></span><span class="sim-tag" data-i18n="lv_sim_tag"></span><span class="lb-t" data-i18n="lv_legend_sim_s"></span></div>
+      <div class="lb-chips" id="lb-chips"></div>
+    </div>
+    <div id="heat-legend" class="heat-legend" hidden><b data-i18n="heat_legend"></b><i></i><span><bdi class="ltr">30 °C</bdi><bdi class="ltr">70 °C</bdi></span></div>
+  </div>
   <div id="fallback" class="fallback" hidden>
     <p class="fb-msg" data-i18n="fb_msg"></p>
     <canvas id="fb-canvas" width="900" height="520" role="img" data-i18n-aria="fb_aria"></canvas>
@@ -75,6 +82,7 @@
   <div class="tabs" role="tablist" id="tabs">
     <button role="tab" data-tab="missions" aria-selected="true" id="tab-missions"><span data-i18n="tab_missions"></span><i class="dot" id="nb-missions" hidden></i></button>
     <button role="tab" data-tab="command" aria-selected="false" id="tab-command"><span data-i18n="tab_command"></span></button>
+    <button role="tab" data-tab="live" aria-selected="false" id="tab-live"><span data-i18n="tab_live"></span></button>
     <button role="tab" data-tab="alerts" aria-selected="false" id="tab-alerts"><span data-i18n="tab_alerts"></span><i class="dot" id="nb-alerts" hidden></i></button>
     <button role="tab" data-tab="audit" aria-selected="false" id="tab-audit"><span data-i18n="tab_audit"></span></button>
     <button role="tab" data-tab="about" aria-selected="false" id="tab-about"><span data-i18n="tab_about"></span></button>
@@ -99,6 +107,66 @@
     <p class="tiny muted" data-i18n="cmd_examples"></p>
     <div id="cmd-chips" class="chips"></div>
     <div id="cmd-out" class="cmd-out" aria-live="polite"></div>
+  </div>
+  <div class="tabpanel" id="p-live" role="tabpanel" aria-labelledby="tab-live" hidden>
+    <div class="lv-legend lv-legend-p" role="group" data-i18n-aria="lv_legend_title">
+      <b data-i18n="lv_legend_title"></b>
+      <span class="lg"><span class="live-badge"><i></i>LIVE / حي</span><span data-i18n="lv_legend_live"></span></span>
+      <span class="lg"><span class="sim-tag" data-i18n="lv_sim_tag"></span><span data-i18n="lv_legend_sim"></span></span>
+    </div>
+
+    <section class="lv-sec" id="lv-wx" aria-labelledby="lv-wx-h">
+      <h2 class="sec" id="lv-wx-h"><span data-i18n="lv_wx_title"></span> <span class="live-badge"><i></i>LIVE / حي</span></h2>
+      <div class="wx-tools">
+        <label><span data-i18n="lv_wx_thr"></span><input type="number" id="wx-thr" min="5" max="150" step="1" inputmode="numeric"></label>
+        <button class="btn btn-ghost btn-sm" id="wx-refresh" type="button"><svg class="ico"><use href="#i-reset"/></svg><span data-i18n="lv_wx_refresh"></span></button>
+      </div>
+      <div class="wx-cards" id="wx-cards"></div>
+      <p class="tiny muted wx-note" data-i18n="lv_wx_src"></p>
+      <p class="tiny muted wx-note" data-i18n="lv_wx_thr_note"></p>
+    </section>
+
+    <section class="lv-sec" id="lv-pt" aria-labelledby="lv-pt-h">
+      <h2 class="sec" id="lv-pt-h"><span data-i18n="lv_pt_title"></span> <span class="live-badge"><i></i>LIVE / حي</span></h2>
+      <p class="banner banner-live" data-i18n="lv_pt_note"></p>
+      <label class="fld"><span class="tiny" data-i18n="lv_pt_sat"></span><select id="sat-sel"></select></label>
+      <dl class="pt-grid" id="pt-out"></dl>
+      <p class="tiny muted" data-i18n="lv_pt_generic"></p>
+      <p class="tiny muted" data-i18n="lv_pt_station"></p>
+      <p class="tiny muted" data-i18n="lv_pt_skew_note"></p>
+      <p class="tiny muted" data-i18n="lv_pt_scene"></p>
+    </section>
+
+    <section class="lv-sec" id="lv-cam" aria-labelledby="lv-cam-h">
+      <h2 class="sec" id="lv-cam-h"><span data-i18n="lv_cam_title"></span> <span class="live-badge" id="cam-badge" hidden><i></i>LIVE / حي</span></h2>
+      <p class="banner banner-priv" data-i18n="lv_cam_priv"></p>
+      <div class="cam-box" id="cam-box" hidden><video id="cam-video" playsinline muted></video><canvas id="cam-ov" aria-hidden="true"></canvas></div>
+      <div class="row-acts">
+        <button class="btn btn-primary btn-sm" id="cam-start" type="button"><span data-i18n="lv_cam_start"></span></button>
+        <button class="btn btn-ghost btn-sm" id="cam-stop" type="button" disabled><span data-i18n="lv_cam_stop"></span></button>
+      </div>
+      <p class="small" id="cam-status" role="status"></p>
+      <p class="small" id="cam-counts"></p>
+      <p class="tiny muted" data-i18n="lv_cam_gate"></p>
+      <p class="tiny muted" id="cam-frames"></p>
+      <p class="tiny muted" data-i18n="lv_cam_note"></p>
+    </section>
+
+    <section class="lv-sec" id="lv-sn" aria-labelledby="lv-sn-h">
+      <h2 class="sec" id="lv-sn-h"><span data-i18n="lv_sn_title"></span> <span id="sn-badge"></span></h2>
+      <p class="small" id="sn-status" role="status"></p>
+      <p class="small" id="sn-reading"></p>
+      <div class="sn-row">
+        <label class="fld"><span class="tiny" data-i18n="lv_sn_cab"></span><select id="sn-cab"><option>A</option><option selected>B</option><option>C</option></select></label>
+        <label class="fld"><span class="tiny" data-i18n="lv_sn_thr"></span><input type="number" id="sn-thr" min="20" max="120" step="0.5" inputmode="decimal"></label>
+      </div>
+      <div class="row-acts"><button class="btn btn-ghost btn-sm" id="sn-settings" type="button"><span data-i18n="lv_sn_settings"></span></button></div>
+      <label class="chk"><input type="checkbox" id="sn-sim"><span data-i18n="lv_sn_sim"></span> <span class="sim-tag" data-i18n="lv_sn_simtag"></span></label>
+      <label class="fld" id="sn-sim-wrap" hidden><span class="tiny"><span data-i18n="lv_sn_sim_val"></span>: <bdi class="ltr" id="sn-sim-out">38</bdi> °C</span><input type="range" id="sn-sim-val" min="25" max="70" step="0.5" value="38"></label>
+      <p class="tiny muted" data-i18n="lv_sn_sim_note"></p>
+      <p class="tiny muted" data-i18n="lv_sn_how"></p>
+    </section>
+    <p class="tiny muted" data-i18n="lv_net_note"></p>
   </div>
   <div class="tabpanel" id="p-alerts" role="tabpanel" aria-labelledby="tab-alerts" hidden>
     <h2 class="sec"><span data-i18n="al_title"></span> <span class="chip sim-chip">SIMULATED</span></h2>
@@ -132,6 +200,23 @@
   </p>
 </footer>
 
+
+<dialog id="sn-dlg" class="dlg" aria-labelledby="sn-dlg-h">
+  <form method="dialog" id="sn-form" autocomplete="off" novalidate>
+    <h2 id="sn-dlg-h" data-i18n="lv_sn_dlg"></h2>
+    <label class="fld"><span class="tiny" data-i18n="lv_sn_url"></span><input type="url" id="sn-url" placeholder="https://xxxxxxxx.supabase.co" inputmode="url" spellcheck="false" autocapitalize="off"></label>
+    <label class="fld"><span class="tiny" data-i18n="lv_sn_key"></span><input type="password" id="sn-key" placeholder="sb_publishable_… / eyJ…" spellcheck="false" autocapitalize="off" autocomplete="off"></label>
+    <label class="fld"><span class="tiny" data-i18n="lv_sn_dev"></span><input type="text" id="sn-dev" placeholder="esp32-cab-b" spellcheck="false" autocapitalize="off" maxlength="60"></label>
+    <p class="tiny muted" data-i18n="lv_sn_local"></p>
+    <p class="small bad-t" id="sn-dlg-err" role="alert" hidden></p>
+    <div class="row-acts">
+      <button class="btn btn-primary btn-sm" id="sn-save" type="submit" value="save"><span data-i18n="lv_sn_save"></span></button>
+      <button class="btn btn-ghost btn-sm" id="sn-clear" type="button"><span data-i18n="lv_sn_clear"></span></button>
+      <button class="btn btn-ghost btn-sm" id="sn-close" type="button"><span data-i18n="lv_sn_close"></span></button>
+    </div>
+  </form>
+</dialog>
+
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <div id="report" class="report-ov" role="dialog" aria-modal="true" aria-labelledby="rp-h" hidden>
@@ -144,6 +229,9 @@
 </div>
 
 <script src="js/i18n3d.js"></script>
+<script src="../assets/js/i18n-live.js"></script>
+<script src="../assets/js/weather.js"></script>
+<script src="../assets/js/geo.js"></script>
 <script src="js/nlp.js"></script>
 <script type="module" src="js/app3d.js"></script>
 </body>
