@@ -90,9 +90,12 @@
   </div>
 </header>
 
-<div class="geo-banner" role="note">
-  <p class="geo-note" data-i18n="geo_note"></p>
-  <p class="geo-context" data-i18n="geo_context"></p>
+<div class="geo-banner" id="geo-banner" role="note">
+  <button type="button" class="geo-chip" id="geo-chip" aria-expanded="false" aria-controls="geo-full"><span data-i18n="m_info"></span><span class="geo-chip-preview" data-i18n="geo_note"></span></button>
+  <div class="geo-full" id="geo-full">
+    <p class="geo-note" data-i18n="geo_note"></p>
+    <p class="geo-context" data-i18n="geo_context"></p>
+  </div>
 </div>
 
 <main id="main" tabindex="-1">

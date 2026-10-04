@@ -244,7 +244,7 @@ body.rp-open { overflow: hidden; }
 }
 @media (max-width: 640px) {
   .board { grid-template-columns: 1fr; } .roles-grid { grid-template-columns: 1fr; } .paper { padding: 18px 14px; } .alert header .tiny { margin-inline-start: 0; width: 100%; }
-  .sim-badge { font-size: 10.5px; padding: 5px 10px; white-space: nowrap; } .card { padding: 14px; border-radius: 18px; }
+  .sim-badge { font-size: 10.5px; padding: 5px 10px; white-space: nowrap; max-width: min(42vw, 9.5rem); overflow: hidden; } .sim-badge span { overflow: hidden; text-overflow: ellipsis; } .card { padding: 14px; border-radius: 18px; }
   /* audit table becomes cards */
   .tbl thead { display: none; } .tbl, .tbl tbody, .tbl tr, .tbl td { display: block; width: 100%; } .tbl tr { padding: 10px 14px; border-block-end: 1px solid var(--line); } .tbl td { border: 0; padding: 2px 0; } .tbl td:first-child { font-size: 12px; }
   .tbl td[data-l="Actor"]::before { content: none; }

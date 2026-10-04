@@ -163,6 +163,38 @@ body.pres .btn-lg { font-size: 1.35rem; padding: .9rem 2.2rem; }
   .report-ov { position: static; background: #fff; padding: 0; overflow: visible; } .no-print { display: none !important; } .paper { box-shadow: none; max-width: none; padding: 0; margin: 0; border-radius: 0; }
 }
 
+/* ---- narrow phones: one chip bar, one bottom sheet at a time ---- */
+.m-dock { display: contents; }
+.m-chip { display: none; }
+.m-sheet { display: none; }
+.sat-readout { display: none; }
+@media (max-width: 640px) {
+  .view, body.pres .view { height: 72dvh; min-height: 20rem; }
+  .m-dock { display: flex; position: absolute; z-index: 32; inset-inline: .3rem; inset-block-end: .3rem; align-items: center; gap: .28rem; flex-wrap: nowrap; max-width: calc(100% - .6rem); padding: .2rem; border-radius: 999px; background: rgba(6, 6, 14, .92); border: 1px solid var(--line-2); overflow: hidden; }
+  .m-dock .sim-badge { position: static; transform: none; inset: auto; flex: 0 1 auto; min-width: 0; max-width: 5.6rem; font-size: .62rem; padding: .12rem .4rem; gap: .28rem; white-space: nowrap; box-shadow: none; }
+  html[dir="rtl"] .m-dock .sim-badge { transform: none; }
+  .m-dock .sim-badge span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m-chip { display: inline-flex; align-items: center; justify-content: center; flex: 1 1 auto; min-width: 0; max-width: 6.2rem; border: 1px solid var(--line-2); background: rgba(255, 255, 255, .08); color: #fff; border-radius: 999px; padding: .18rem .4rem; font: 700 .68rem/1.2 inherit; cursor: pointer; }
+  .m-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m-chip[aria-pressed="true"] { background: var(--grad); border-color: transparent; }
+  .m-sheet:not([hidden]) { display: flex; flex-direction: column; position: absolute; z-index: 31; inset-inline: .35rem; inset-block-end: 2.55rem; max-height: 45vh; overflow: hidden; background: rgba(8, 8, 22, .97); border: 1px solid var(--line-2); border-radius: .85rem; box-shadow: 0 12px 40px rgba(0, 0, 0, .45); }
+  .m-sheet-h { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .35rem .45rem .35rem .7rem; border-bottom: 1px solid var(--line); flex: none; }
+  .m-sheet-h b { font-size: .92rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m-x { width: 2rem; height: 2rem; border-radius: 999px; border: 1px solid var(--line-2); background: rgba(255, 255, 255, .08); color: #fff; font-size: 1.2rem; line-height: 1; cursor: pointer; flex: none; }
+  .m-sheet-b { overflow: auto; min-height: 0; padding: .45rem .6rem .65rem; -webkit-overflow-scrolling: touch; }
+  .vtl > #livebar, .vtl > .geo-banner, .vtl > #sat-readout { display: none !important; }
+  .m-sheet #livebar, .m-sheet .geo-banner, .m-sheet #sat-readout { display: block !important; width: 100%; max-width: none; position: static; margin: 0; }
+  .m-sheet .geo-banner { border-radius: .7rem; }
+  .sat-readout p { margin: .15rem 0; }
+  .sat-readout .sr-dish, .sat-readout .sr-ku { font-weight: 800; }
+  .sat-readout .sr-pt { font-family: var(--mono); direction: ltr; text-align: start; }
+  .vtl { inset-block-start: .35rem; max-width: 11rem; }
+  .camtools { inset-block-end: 2.7rem; }
+  body > #hud { display: none; }
+  .m-sheet #hud { display: flex; position: static; inset: auto; padding: 0; }
+  .lbl-dish, .lbl-ku, .lbl-cab .cl { display: none !important; }
+}
+
 /* ---- phones / small windows: stacked layout, page scrolls ---- */
 @media (max-width: 900px) {
   :root { --pw: 0rem; --th: auto; --fh: auto; }
@@ -220,3 +252,10 @@ body.pres .btn-lg { font-size: 1.35rem; padding: .9rem 2.2rem; }
 .alert.is-live { box-shadow: 0 0 0 1px #34d399 inset; }
 .tabs button { padding: .5rem .45rem; font-size: .92rem; }
 body.pres .vtl { max-width: min(40rem, 50vw); } body.pres .livebar { font-size: 1.1rem; } body.pres .lb-chip { font-size: 1.05rem; } body.pres .lb-t { font-size: 1.02rem; }
+@media (max-width: 640px) {
+  .view, body.pres .view { height: 72dvh; min-height: 18rem; }
+  .camtools { inset-block-end: 2.7rem; inset-block-start: auto; flex-wrap: nowrap; overflow: auto; }
+  .view:has(#m-sheet:not([hidden])) .camtools { visibility: hidden; pointer-events: none; }
+  .vtl { inset-block-start: .35rem; max-width: 11rem; }
+  body.pres .vtl { max-width: 11rem; }
+}

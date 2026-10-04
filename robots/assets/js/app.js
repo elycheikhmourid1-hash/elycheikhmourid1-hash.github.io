@@ -698,6 +698,11 @@
     lang = q ? q[1] : (saved === 'fr' || saved === 'ar' || saved === 'en' ? saved : 'ar');
     S = freshState(); buildRoutes(); seed(); renderAll();
     $('#lang').addEventListener('click', function () { setLang(lang === 'ar' ? 'fr' : lang === 'fr' ? 'en' : 'ar'); });
+    var geoBanner = $('#geo-banner'), geoChip = $('#geo-chip');
+    if (geoChip && geoBanner) geoChip.addEventListener('click', function () {
+      var open = geoBanner.classList.toggle('is-open');
+      geoChip.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
     $('#op').addEventListener('change', function (e) { S.op = e.target.value; toast(t('lv_op_set', { n: opName(S.op, true) })); });
     $('#wx-refresh').addEventListener('click', function () { toast(t('lv_wx_refreshing')); WX.fetchNow().then(function () { toast(WX.get('nkc').ok ? t('lv_wx_refreshed') : t('lv_wx_unavail')); }); });
     $('#wx-thr').addEventListener('change', function (e) { WX.setWindThreshold(e.target.value); toast(t('lv_saved')); e.target.value = WX.windThreshold(); checkWind(); renderWeather(); });
