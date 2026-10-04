@@ -1,6 +1,7 @@
 /* AICore Robotics Ops 3D — SIMULATION + LIVE. Application logic: human-in-the-loop missions, rule-based command parser UI,
-   simulated alerts, audit log, reports. 100% client-side. Network calls: ONLY Open-Meteo weather (assets/js/weather.js) and, if the user
-   configures it, their own Supabase sensor table (live3d.js). Camera video stays on the device. Everything else is fictional (SIMULATION). */
+   simulated alerts, audit log, reports. 100% client-side. Network calls: Open-Meteo weather (assets/js/weather.js); map tiles
+   (OpenStreetMap or Esri) only while the Map view is open, current view only; and, if the user configures it, their own Supabase
+   sensor table (live3d.js). Camera video stays on the device. EXAMPLE pins, robots and tasks stay fictional (SIMULATION). */
 import { LAYOUT } from './layout.js';
 
 const I = window.I18N3D, NLP = window.NLP3D;
@@ -658,7 +659,97 @@ function updateDriftAmp() {
   const drifting = S.alerts.some(a => a.status === 'open' && a.type === 'track') || S.missions.some(m => m.status === 'awaiting' && m.kind === 'dish' && m.flags.drift);
   SC.setDriftAmp(drifting ? 0.06 : 0.012);
 }
-function afterChange() { renderQueue(); renderHud(); renderAlerts(); renderAudit(); renderCmd(); renderRobotBits(); updateDots(); updateDriftAmp(); }
+function afterChange() { renderQueue(); renderHud(); renderAlerts(); renderAudit(); renderCmd(); renderRobotBits(); updateDots(); updateDriftAmp(); syncMap3d(); }
+
+/* ---------- real map (Leaflet). Pins are EXAMPLE; approval reuses mission/alert actions. Tasks live on the illustrative station pin. ---------- */
+let mvApi = null, mapOn = false;
+function mapTaskHtml(pointId) {
+  if (pointId !== 'gs') return '<p class="small">' + esc(t('map_no_task')) + '</p>';
+  const awaiting = S.missions.filter(m => m.status === 'awaiting');
+  if (awaiting.length) {
+    const m = awaiting[0], live = missionLive(m);
+    return '<p class="tiny">' + (live ? '<span class="live-badge"><i></i>LIVE / حي</span>' : '<span class="sim-tag">' + esc(t('lv_sim_tag')) + '</span>') + '</p>' +
+      '<p><b>' + esc(kindName(m.kind)) + '</b> ' + ltr(m.id) + '</p>' +
+      '<p class="small muted">' + esc(t('robot')) + ' ' + ltr(m.robot) + '</p>' +
+      '<p class="hint tiny">' + esc(t('hint_awaiting', { r: m.robot })) + '</p>' +
+      '<div class="acts"><button class="btn btn-ok btn-sm" type="button" data-mv-approve="' + m.id + '"><svg class="ico"><use href="#i-check"/></svg>' + esc(t('approve')) + '</button>' +
+      '<button class="btn btn-ghost btn-sm" type="button" data-mv-reject="' + m.id + '"><svg class="ico"><use href="#i-x"/></svg>' + esc(t('reject')) + '</button></div>' +
+      (awaiting.length > 1 ? '<p class="tiny muted">' + esc(t('map_more', { n: awaiting.length - 1 })) + '</p>' : '');
+  }
+  const open = S.alerts.filter(a => a.status === 'open');
+  if (open.length) {
+    const a = open[0], live = isLiveAlert(a), d = ALERT_DEFS[a.type] || {}, dat = a.data || {};
+    const vars = { w: dat.w, g: dat.g, thr: dat.thr, rain: dat.rain, m: dat.measured != null ? f1(dat.measured) : '', c: dat.computed != null ? f1(dat.computed) : (dat.cab || ''), sat: dat.sat, d: dat.dev != null ? (dat.dev > 0 ? '+' : '') + f1(dat.dev) : '', n: dat.n, v: dat.temp != null ? f1(dat.temp) : '', src: dat.src ? t(dat.src) : '' };
+    return '<p class="tiny">' + (live ? '<span class="live-badge"><i></i>LIVE / حي</span>' : '<span class="sim-tag">' + esc(t('lv_sim_tag')) + '</span>') + ' ' + esc(t('th_' + (d.sev || 'medium'))) + '</p>' +
+      '<p><b>' + esc(t('al_' + a.type)) + '</b> ' + ltr(a.id) + '</p>' +
+      '<p class="small">' + esc(t('al_' + a.type + '_d', vars)) + '</p>' +
+      '<div class="acts"><button class="btn btn-primary btn-sm" type="button" data-mv-draft="' + a.id + '"><svg class="ico"><use href="#i-bolt"/></svg>' + esc(t('al_draftbtn')) + '</button>' +
+      '<button class="btn btn-ghost btn-sm" type="button" data-mv-dismiss="' + a.id + '">' + esc(t('al_dismiss')) + '</button></div>' +
+      (open.length > 1 ? '<p class="tiny muted">' + esc(t('map_more', { n: open.length - 1 })) + '</p>' : '');
+  }
+  return '<p class="small">' + esc(t('map_no_task')) + '</p>';
+}
+function renderMapDetail() {
+  const host = $('#map-detail'); if (!host || !window.MapView) return;
+  const id = mvApi ? mvApi.selected() : 'gs';
+  const p = MapView.point(id) || MapView.POINTS[0];
+  host.innerHTML = '<h2 class="mv-h"><span class="mv-ex">EXAMPLE</span> ' + esc(t('map_pt_' + p.id)) + '</h2>' +
+    '<p class="tiny"><span class="sim-tag">' + esc(t('lv_sim_tag')) + '</span></p>' +
+    '<h3 class="mv-h3">' + esc(t('map_task_h')) + '</h3>' + mapTaskHtml(p.id) +
+    MapView.liveHtml({ t, esc, ltr, lat: p.lat, lon: p.lon });
+  paintMapLayer();
+  refreshSheetTitle();
+}
+function paintMapLayer() {
+  const sat = mvApi && mvApi.mode() === 'sat';
+  const layer = $('#map-layer'), back = $('#map-back');
+  if (layer) {
+    layer.textContent = t(sat ? 'map_streets' : 'map_sat');
+    layer.setAttribute('aria-pressed', sat ? 'true' : 'false');
+    layer.setAttribute('aria-label', t('map_layer_aria'));
+  }
+  if (back) back.textContent = t('map_back');
+}
+function mapAlertIds() { return S.alerts.some(a => a.status === 'open') ? ['gs'] : []; }
+function syncMap3d() {
+  if (!mapOn) return;
+  renderMapDetail();
+  if (!mvApi) return;
+  mvApi.setAlertPoints(mapAlertIds());
+  mvApi.redrawLabels();
+}
+function ensureMap3d() {
+  if (!window.MapView || !$('#geo-map-canvas')) return;
+  if (!mvApi) {
+    mvApi = MapView.create({
+      el: '#geo-map-canvas', failEl: '#geo-map-fail', t,
+      onSelect: (id, fromUser) => {
+        renderMapDetail();
+        if (fromUser && window.matchMedia('(max-width: 640px)').matches && sheetKind !== 'point') openSheet('point');
+      },
+      onBase: () => paintMapLayer()
+    });
+  }
+  mvApi.start();
+  mvApi.setAlertPoints(mapAlertIds());
+  mvApi.redrawLabels();
+  renderMapDetail();
+  setTimeout(() => { if (mvApi) mvApi.invalidate(); }, 80);
+}
+function setMapMode(on) {
+  mapOn = !!on;
+  document.body.classList.toggle('map-on', mapOn);
+  const host = $('#geo-map'); if (host) host.hidden = !mapOn;
+  const chip = $('#m-map'), cam = $('#cam-map');
+  if (chip) chip.setAttribute('aria-pressed', mapOn ? 'true' : 'false');
+  if (cam) cam.setAttribute('aria-pressed', mapOn ? 'true' : 'false');
+  if (mapOn) ensureMap3d();
+  else {
+    if (mvApi) mvApi.stop();
+    if (sheetKind === 'point') closeSheet();
+  }
+}
+function toggleMap() { setMapMode(!mapOn); }
 
 function applyStatic() {
   document.documentElement.lang = lang; document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'; document.title = t('page_title');
@@ -672,7 +763,7 @@ function applyStatic() {
   $('#wa').title = 'WhatsApp';
 }
 /* Narrow screens: one chip opens one bottom sheet. Panels are moved, never stacked. */
-const SHEET_SEL = { live: '#livebar', sat: '#sat-readout', info: '#geo-banner', tasks: '#hud' };
+const SHEET_SEL = { live: '#livebar', sat: '#sat-readout', info: '#geo-banner', tasks: '#hud', point: '#map-detail' };
 const sheetHome = {};
 let sheetKind = null;
 function park(sel) {
@@ -689,10 +780,11 @@ function closeSheet() {
   if (sheetKind) restoreSheetNode(SHEET_SEL[sheetKind]);
   sheetKind = null;
   const sh = $('#m-sheet'); if (sh) sh.hidden = true;
-  $$('.m-chip').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  $$('.m-chip').forEach(b => { if (b.id !== 'm-map') b.setAttribute('aria-pressed', 'false'); });
 }
 function openSheet(kind) {
   if (!window.matchMedia('(max-width: 640px)').matches) return;
+  if (!SHEET_SEL[kind]) return;
   if (sheetKind === kind) { closeSheet(); return; }
   if (sheetKind) restoreSheetNode(SHEET_SEL[sheetKind]);
   const el = park(SHEET_SEL[kind]); if (!el) return;
@@ -700,23 +792,28 @@ function openSheet(kind) {
   $('#m-sheet-b').appendChild(el);
   el.hidden = false;
   $('#m-sheet').hidden = false;
-  $$('.m-chip').forEach(b => b.setAttribute('aria-pressed', b.dataset.sheet === kind ? 'true' : 'false'));
+  $$('.m-chip').forEach(b => { if (b.id !== 'm-map') b.setAttribute('aria-pressed', b.dataset.sheet === kind ? 'true' : 'false'); });
   refreshSheetTitle();
   const x = $('#m-sheet-x'); if (x) x.focus();
 }
 function refreshSheetTitle() {
   if (!sheetKind || !$('#m-sheet') || $('#m-sheet').hidden) return;
+  if (sheetKind === 'point') {
+    const id = mvApi ? mvApi.selected() : 'gs';
+    $('#m-sheet-t').textContent = t('map_pt_' + id);
+    return;
+  }
   const chip = $('.m-chip[data-sheet="' + sheetKind + '"] span');
   if (chip) $('#m-sheet-t').textContent = chip.textContent;
 }
 function bindSheets() {
-  $$('.m-chip').forEach(b => b.addEventListener('click', () => openSheet(b.dataset.sheet)));
+  $$('.m-chip').forEach(b => b.addEventListener('click', () => { if (b.id === 'm-map') toggleMap(); else openSheet(b.dataset.sheet); }));
   const x = $('#m-sheet-x'); if (x) x.addEventListener('click', closeSheet);
   const mq = window.matchMedia('(max-width: 640px)');
   const onMq = () => { if (!mq.matches) closeSheet(); };
   if (mq.addEventListener) mq.addEventListener('change', onMq); else if (mq.addListener) mq.addListener(onMq);
 }
-function renderAll() { applyStatic(); renderTemplates(); if (LV) LV.render(); renderQueue(); renderHud(); renderCmd(); renderAlerts(); renderAudit(); renderAbout(); relabel(); renderRobotBits(); updateDots(); selectTab(S.tab); if (S.report) paintReport(); refreshSheetTitle(); }
+function renderAll() { applyStatic(); renderTemplates(); if (LV) LV.render(); renderQueue(); renderHud(); renderCmd(); renderAlerts(); renderAudit(); renderAbout(); relabel(); renderRobotBits(); updateDots(); selectTab(S.tab); if (S.report) paintReport(); refreshSheetTitle(); syncMap3d(); }
 function setLang(l) { lang = l; try { localStorage.setItem(LS_LANG, l); } catch (e) { /* ignore */ } const u = new URL(location.href); u.searchParams.set('lang', l); history.replaceState(null, '', u); renderAll(); }
 
 function setPres(on) {
@@ -770,17 +867,29 @@ async function init() {
     SC.onFollowChange = () => $('#cam-follow').setAttribute('aria-pressed', 'false');
   } catch (e) {
     SC = null; webgl = false; $('#fallback').hidden = false; console.info('3D unavailable, using 2D fallback:', e && e.message);
-    $$('#camtools button').forEach(b => { b.disabled = true; });
+    $$('#camtools button').forEach(b => { if (b.id !== 'cam-map') b.disabled = true; });
   }
   try {
     const mod = await import('./live3d.js');
-    LV = mod.createLive({ toast, t, esc, ltr, $, $$, lang: () => lang, fClock, SC: () => SC, raiseLiveAlert, fxActive: () => !$('#heat-legend').hidden, afterPointing: () => { /* reserved */ } });
+    LV = mod.createLive({ toast, t, esc, ltr, $, $$, lang: () => lang, fClock, SC: () => SC, raiseLiveAlert, fxActive: () => !$('#heat-legend').hidden, afterPointing: () => { if (mapOn) renderMapDetail(); } });
   } catch (e) { LV = null; console.error('live module failed', e); }
   buildLabels(); seed(); renderAll();
   if (LV) { LV.init(); LV.applyPointing(); }
   if (webgl) SC.speedMul = SPEED;
   /* events */
   bindSheets();
+  const camMap = $('#cam-map'); if (camMap) camMap.addEventListener('click', toggleMap);
+  const mapLayer = $('#map-layer'); if (mapLayer) mapLayer.addEventListener('click', () => { if (mvApi) mvApi.toggleBase(); });
+  const mapBack = $('#map-back'); if (mapBack) mapBack.addEventListener('click', () => setMapMode(false));
+  const mapDetail = $('#map-detail');
+  if (mapDetail) mapDetail.addEventListener('click', e => {
+    const n = e.target.closest('[data-mv-approve],[data-mv-reject],[data-mv-draft],[data-mv-dismiss]'); if (!n) return;
+    if (n.hasAttribute('data-mv-approve')) approve(n.getAttribute('data-mv-approve'));
+    else if (n.hasAttribute('data-mv-reject')) reject(n.getAttribute('data-mv-reject'));
+    else if (n.hasAttribute('data-mv-draft')) draftFromAlert(n.getAttribute('data-mv-draft'), true);
+    else dismissAlert(n.getAttribute('data-mv-dismiss'));
+  });
+  if (window.WX) WX.onChange(() => { if (mapOn) renderMapDetail(); });
   $$('#langs button').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
   $$('#tabs [role=tab]').forEach(b => b.addEventListener('click', () => selectTab(b.dataset.tab)));
   $('#pres').addEventListener('click', () => setPres(!document.body.classList.contains('pres')));
@@ -811,6 +920,7 @@ async function init() {
   });
   if (qs.get('pres') === '1') setPres(true);
   if (qs.get('cine') === '1') setCine(true);
+  if (qs.get('map') === '1') setMapMode(true);
   setInterval(tick, 1000); tick();
   window.__demo3d = { live: () => LV, wx: window.WX, geo: window.GEO, state: () => S, lang: () => lang, webgl: () => webgl, parse: NLP.parse, scene: () => SC, speed: SPEED, tz: () => tzAbbr(Date.now()), fDT, setPres };
   document.body.dataset.ready = '1';

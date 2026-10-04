@@ -6,7 +6,7 @@
     ar: {
       lv_live_title: 'بيانات حقيقية — مجلوبة أو محسوبة مباشرةً (غير محاكاة)',
       lv_legend_title: 'مفتاح الألوان', lv_legend_live: 'بيانات حقيقية (مجلوبة أو محسوبة مباشرةً)', lv_legend_sim: 'بيانات محاكاة / افتراضية', lv_sim_tag: 'SIMULATION / محاكاة',
-      lv_net_note: 'الاتصالات الشبكية الوحيدة: الطقس من Open-Meteo، وتغذية الحساس الاختيارية من مشروع Supabase الخاص بك. فيديو الكاميرا لا يغادر جهازك أبداً.',
+      lv_net_note: 'الاتصالات الشبكية: الطقس من Open-Meteo، وبلاطات الخريطة من OpenStreetMap أو Esri عند فتح الخريطة فقط (العرض الحالي دون تحميل مسبق بالجملة)، وتغذية الحساس الاختيارية من مشروع Supabase الخاص بك. فيديو الكاميرا لا يغادر جهازك أبداً.',
       lv_wx_title: 'الطقس الحي', lv_wx_src: 'المصدر: Open-Meteo (open-meteo.com) — الأحوال الحالية، تُحدَّث كل 10 دقائق.',
       lv_wx_site_nkc: 'نواكشوط', lv_wx_site_nou: 'نواذيبو', lv_wx_site_atr: 'أطار',
       lv_wx_temp: 'درجة الحرارة', lv_wx_wind: 'الرياح', lv_wx_gust: 'هبّات الرياح', lv_wx_hum: 'الرطوبة', lv_wx_cloud: 'الغطاء السحابي', lv_wx_rain: 'الهطول',
@@ -21,7 +21,7 @@
       'al.wind.title': 'رياح قوية — فحص حمل الرياح على الطبق',
       'al.wind.detail': 'رياح حية {v} كم/س في {site} (Open-Meteo) فوق عتبة التنبيه {thr} كم/س — بيانات حقيقية',
       'al.wind.draft': 'إرسال {robot} لفحص حمل الرياح على الطبق (التثبيت والمسامير والكابلات) — يتطلب موافقة بشرية.',
-      ro4_b: 'تعمل هذه النسخة داخل متصفحك. الاتصالان الوحيدان بالشبكة: الطقس الحي من Open-Meteo، وتغذية حساس اختيارية من مشروع Supabase الخاص بك. لا تُرسَل بيانات المشغّل ولا صور أي كاميرا إلى أي خادم.',
+      ro4_b: 'تعمل هذه النسخة داخل متصفحك. اتصالات الشبكة: الطقس الحي من Open-Meteo، وبلاطات الخريطة (OpenStreetMap أو Esri) عند فتح الخريطة فقط وللعرض الحالي، وتغذية حساس اختيارية من مشروع Supabase الخاص بك. لا تُرسَل بيانات المشغّل ولا صور أي كاميرا إلى أي خادم.',
 
       lv_legend_live_s: 'بيانات حقيقية', lv_legend_sim_s: 'محاكاة',
       an_dish_wind: 'تنبيه رياح قوية حقيقية (Open-Meteo): فحص بصري لتثبيت الطبق والمسامير والكابلات بعد الرياح. الروبوت يفحص فقط ولا يعدّل شيئاً.',
@@ -64,12 +64,12 @@
       lv_sn_sim: 'محاكاة الحساس (SIMULATED)', lv_sn_sim_val: 'درجة الحرارة المحاكاة', lv_sn_sim_note: 'للاختبار بلا عتاد — تُعرض دائماً بوسم SIMULATED ولا تُعتبر بيانات حقيقية.',
       lv_sn_simtag: 'SIMULATED / محاكاة', lv_sn_cabtag: 'الخزانة {c}', lv_live_sensor: 'حساس حي', lv_sim_sensor: 'حساس محاكى',
       lv_sn_thr_now: 'العتبة الحالية: {t}°C', lv_sn_how: 'للتجهيز: انظر esp32/ESP32_AR.md في مجلد المصدر.',
-      sim_statement: 'هذه محاكاة. الروبوتات والتنبيهات المحاكاة والقراءات والتقارير افتراضية. العناصر ذات الوسم «LIVE / حي» فقط حقيقية: الطقس (Open-Meteo)، وحساب زوايا توجيه الطبق من الهندسة، وكشف الأجسام بكاميرا جهازك، وحساس حرارة اختياري إن أعددته. لا روبوت حقيقي ولا عميل حقيقي. صندوق الأوامر قائم على قواعد (بلا ذكاء اصطناعي)؛ نموذج كشف الأجسام يعمل محلياً في متصفحك فقط.'
+      sim_statement: 'هذه محاكاة. الروبوتات والتنبيهات المحاكاة والقراءات والتقارير افتراضية. العناصر ذات الوسم «LIVE / حي» فقط حقيقية: الطقس (Open-Meteo)، وحساب زوايا توجيه الطبق من الهندسة، وكشف الأجسام بكاميرا جهازك، وحساس حرارة اختياري إن أعددته. بلاط الشوارع والأقمار صور خرائط حقيقية لنواكشوط؛ نقاط EXAMPLE والروبوتات والمهام على الخريطة تبقى محاكاة ولا تعني أن أي محطة أو مشغّل تحت المراقبة. لا روبوت حقيقي ولا عميل حقيقي. صندوق الأوامر قائم على قواعد (بلا ذكاء اصطناعي)؛ نموذج كشف الأجسام يعمل محلياً في متصفحك فقط.'
     },
     fr: {
       lv_live_title: 'Données réelles — récupérées ou calculées en direct (non simulées)',
       lv_legend_title: 'Légende', lv_legend_live: 'Données réelles (récupérées ou calculées en direct)', lv_legend_sim: 'Données simulées / fictives', lv_sim_tag: 'SIMULATION',
-      lv_net_note: 'Seuls appels réseau : la météo (Open-Meteo) et, si vous l’activez, un flux de capteur depuis votre propre projet Supabase. La vidéo de la caméra ne quitte jamais l’appareil.',
+      lv_net_note: 'Appels réseau : la météo (Open-Meteo) ; les tuiles de carte OpenStreetMap ou Esri seulement quand la carte est ouverte (vue actuelle, pas de préchargement en masse) ; et, si vous l’activez, un flux de capteur depuis votre propre projet Supabase. La vidéo de la caméra ne quitte jamais l’appareil.',
       lv_wx_title: 'Météo en direct', lv_wx_src: 'Source : Open-Meteo (open-meteo.com) — conditions actuelles, actualisées toutes les 10 min.',
       lv_wx_site_nkc: 'Nouakchott', lv_wx_site_nou: 'Nouadhibou', lv_wx_site_atr: 'Atar',
       lv_wx_temp: 'Température', lv_wx_wind: 'Vent', lv_wx_gust: 'Rafales', lv_wx_hum: 'Humidité', lv_wx_cloud: 'Couverture nuageuse', lv_wx_rain: 'Précipitations',
@@ -84,7 +84,7 @@
       'al.wind.title': 'Vent fort — contrôle de charge au vent de la parabole',
       'al.wind.detail': 'Vent réel de {v} km/h à {site} (Open-Meteo), au-dessus du seuil d’alerte de {thr} km/h — donnée réelle',
       'al.wind.draft': 'Dépêcher {robot} pour un contrôle de charge au vent de la parabole (fixation, boulons, câbles) — approbation humaine requise.',
-      ro4_b: 'Cette démo s’exécute dans votre navigateur. Seuls appels réseau : la météo en direct (Open-Meteo) et, en option, un flux de capteur depuis votre propre projet Supabase. Aucune donnée d’opérateur ni image de caméra n’est envoyée à un serveur.',
+      ro4_b: 'Cette démo s’exécute dans votre navigateur. Appels réseau : la météo en direct (Open-Meteo), les tuiles de carte (OpenStreetMap ou Esri) seulement pendant que la carte est ouverte et pour la vue actuelle, et, en option, un flux de capteur depuis votre propre projet Supabase. Aucune donnée d’opérateur ni image de caméra n’est envoyée à un serveur.',
 
       lv_legend_live_s: 'données réelles', lv_legend_sim_s: 'simulé',
       an_dish_wind: 'Avis de vent fort réel (Open-Meteo) : contrôle visuel de la fixation, des boulons et des câbles de la parabole après le vent. Le robot observe seulement.',
@@ -127,12 +127,12 @@
       lv_sn_sim: 'Simuler le capteur (SIMULATED)', lv_sn_sim_val: 'Température simulée', lv_sn_sim_note: 'Pour tester sans matériel — toujours étiqueté SIMULATED, jamais présenté comme donnée réelle.',
       lv_sn_simtag: 'SIMULATED', lv_sn_cabtag: 'Armoire {c}', lv_live_sensor: 'capteur LIVE', lv_sim_sensor: 'capteur simulé',
       lv_sn_thr_now: 'Seuil actuel : {t} °C', lv_sn_how: 'Montage : voir esp32/ESP32_AR.md dans le dossier source.',
-      sim_statement: 'Ceci est une SIMULATION. Robots, alertes simulées, mesures et rapports sont fictifs. Seuls les éléments marqués « LIVE / حي » sont réels : la météo (Open-Meteo), le calcul des angles de pointage depuis la géométrie, la détection d’objets par la caméra de votre appareil et, si vous le configurez, un capteur de température. Aucun robot réel, aucun client réel. La commande en langage naturel est à base de règles (pas d’IA) ; le modèle de détection d’objets s’exécute uniquement dans votre navigateur.'
+      sim_statement: 'Ceci est une SIMULATION. Robots, alertes simulées, mesures et rapports sont fictifs. Seuls les éléments marqués « LIVE / حي » sont réels : la météo (Open-Meteo), le calcul des angles de pointage depuis la géométrie, la détection d’objets par la caméra de votre appareil et, si vous le configurez, un capteur de température. Les tuiles rue et satellite sont de vraies images de Nouakchott ; les points EXAMPLE, les robots et les tâches sur la carte restent une simulation et ne signifient pas qu’une station ou un opérateur est surveillé. Aucun robot réel, aucun client réel. La commande en langage naturel est à base de règles (pas d’IA) ; le modèle de détection d’objets s’exécute uniquement dans votre navigateur.'
     },
     en: {
       lv_live_title: 'Real data — fetched or computed live (not simulated)',
       lv_legend_title: 'Legend', lv_legend_live: 'Real data (fetched or computed live)', lv_legend_sim: 'Simulated / fictional data', lv_sim_tag: 'SIMULATION',
-      lv_net_note: 'The only network calls are weather (Open-Meteo) and, if you enable it, an optional sensor feed from your own Supabase project. Camera video never leaves your device.',
+      lv_net_note: 'Network calls: weather (Open-Meteo); map tiles from OpenStreetMap or Esri only while the map is open (current view, no bulk prefetch); and, if you enable it, an optional sensor feed from your own Supabase project. Camera video never leaves your device.',
       lv_wx_title: 'Live weather', lv_wx_src: 'Source: Open-Meteo (open-meteo.com) — current conditions, refreshed every 10 min.',
       lv_wx_site_nkc: 'Nouakchott', lv_wx_site_nou: 'Nouadhibou', lv_wx_site_atr: 'Atar',
       lv_wx_temp: 'Temperature', lv_wx_wind: 'Wind', lv_wx_gust: 'Gusts', lv_wx_hum: 'Humidity', lv_wx_cloud: 'Cloud cover', lv_wx_rain: 'Precipitation',
@@ -147,7 +147,7 @@
       'al.wind.title': 'High wind — dish wind-load check',
       'al.wind.detail': 'Live wind {v} km/h at {site} (Open-Meteo) is above the advisory threshold of {thr} km/h — real data',
       'al.wind.draft': 'Dispatch {robot} for a dish wind-load check (mount, bolts, cables) — human approval required.',
-      ro4_b: 'This demo runs in your browser. The only network calls are live weather from Open-Meteo and, optionally, a sensor feed from your own Supabase project. No operator data and no camera images are sent to any server.',
+      ro4_b: 'This demo runs in your browser. Network calls are live weather from Open-Meteo, map tiles (OpenStreetMap or Esri) only while the map is open and only for the current view, and, optionally, a sensor feed from your own Supabase project. No operator data and no camera images are sent to any server.',
 
       lv_legend_live_s: 'real data', lv_legend_sim_s: 'simulated',
       an_dish_wind: 'Real high-wind advisory (Open-Meteo): visual check of the dish mount, bolts and cables after the wind. The robot only inspects and changes nothing.',
@@ -190,7 +190,7 @@
       lv_sn_sim: 'Simulate sensor (SIMULATED)', lv_sn_sim_val: 'Simulated temperature', lv_sn_sim_note: 'For testing without hardware — always labelled SIMULATED, never presented as real data.',
       lv_sn_simtag: 'SIMULATED', lv_sn_cabtag: 'Cabinet {c}', lv_live_sensor: 'LIVE sensor', lv_sim_sensor: 'simulated sensor',
       lv_sn_thr_now: 'Current threshold: {t} °C', lv_sn_how: 'Hardware setup: see esp32/ESP32_AR.md in the source folder.',
-      sim_statement: 'This is a SIMULATION. Robots, simulated alerts, readings and reports are fictional. Only items marked “LIVE / حي” are real: weather (Open-Meteo), dish look-angles computed from geometry, object detection from your own device camera and, if you configure it, a cabinet temperature sensor. No real robot, no real customer. The command box is rule-based (no AI); the object-detection model runs only inside your browser.'
+      sim_statement: 'This is a SIMULATION. Robots, simulated alerts, readings and reports are fictional. Only items marked “LIVE / حي” are real: weather (Open-Meteo), dish look-angles computed from geometry, object detection from your own device camera and, if you configure it, a cabinet temperature sensor. Street and satellite tiles are real map imagery of Nouakchott; the EXAMPLE pins, robots and tasks on that map stay a simulation and do not mean any station or operator is monitored. No real robot, no real customer. The command box is rule-based (no AI); the object-detection model runs only inside your browser.'
     }
   };
   window.I18N_LIVE = L;

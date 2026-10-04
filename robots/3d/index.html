@@ -10,6 +10,8 @@
 <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="app3d.css">
 <link rel="stylesheet" href="../assets/css/live.css">
+<link rel="stylesheet" href="../assets/vendor/leaflet/leaflet.css" data-leaflet>
+<link rel="stylesheet" href="../assets/css/mapview.css">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -61,6 +63,7 @@
     <button type="button" data-cam="cabinets"><span data-i18n="cam_cabinets"></span></button>
     <button type="button" id="cam-follow" aria-pressed="false"><span data-i18n="cam_follow"></span></button>
     <button type="button" id="cam-cine" aria-pressed="false"><svg class="ico"><use href="#i-orbit"/></svg><span data-i18n="cam_cine"></span></button>
+    <button type="button" id="cam-map" aria-pressed="false"><span data-i18n="m_map"></span></button>
   </div>
   <div id="vtl" class="vtl">
     <div id="livebar" class="livebar" role="status" aria-label="LIVE / SIMULATION">
@@ -84,10 +87,18 @@
     <button type="button" class="m-chip" data-sheet="sat" aria-pressed="false" aria-controls="m-sheet"><span data-i18n="m_sat"></span></button>
     <button type="button" class="m-chip" data-sheet="info" aria-pressed="false" aria-controls="m-sheet"><span data-i18n="m_info"></span></button>
     <button type="button" class="m-chip" data-sheet="tasks" aria-pressed="false" aria-controls="m-sheet"><span data-i18n="m_tasks"></span></button>
+    <button type="button" class="m-chip" id="m-map" aria-pressed="false"><span data-i18n="m_map"></span></button>
   </div>
   <div class="m-sheet" id="m-sheet" hidden>
     <div class="m-sheet-h"><b id="m-sheet-t"></b><button type="button" class="m-x" id="m-sheet-x" data-i18n-aria="m_close">×</button></div>
     <div class="m-sheet-b" id="m-sheet-b"></div>
+  </div>
+  <div id="geo-map" class="geo-map" hidden>
+    <div id="geo-map-canvas" class="geo-map-canvas"></div>
+    <p id="geo-map-fail" class="mv-fail" role="status" hidden></p>
+    <button type="button" id="map-layer" class="mv-layer"></button>
+    <button type="button" id="map-back" class="mv-back"></button>
+    <div id="map-detail" class="map-detail"></div>
   </div>
   <div id="fallback" class="fallback" hidden>
     <p class="fb-msg" data-i18n="fb_msg"></p>
@@ -253,8 +264,11 @@
 <script src="js/i18n3d.js"></script>
 <script src="../assets/js/i18n-live.js"></script>
 <script src="../assets/js/i18n-geo.js"></script>
+<script src="../assets/js/i18n-map.js"></script>
 <script src="../assets/js/weather.js"></script>
 <script src="../assets/js/geo.js"></script>
+<script src="../assets/vendor/leaflet/leaflet.js"></script>
+<script src="../assets/js/mapview.js"></script>
 <script src="js/nlp.js"></script>
 <script type="module" src="js/app3d.js"></script>
 </body>
