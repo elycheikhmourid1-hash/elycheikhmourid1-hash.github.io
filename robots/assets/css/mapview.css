@@ -65,14 +65,16 @@
 
 /* 2D stage: map + side card. Phones collapse the card into one sheet. */
 .mv-stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem); gap: 12px; align-items: stretch; }
-.mv-map { position: relative; height: min(72vh, 680px); min-height: 460px; border-radius: 16px; overflow: hidden; border: 1px solid var(--line-2, rgba(255,255,255,.16)); }
+.mv-map { position: relative; height: min(calc(100dvh - 23rem), 640px); min-height: 320px; border-radius: 16px; overflow: hidden; border: 1px solid var(--line-2, rgba(255,255,255,.16)); }
 #mv-canvas { position: absolute; inset: 0; }
 .mv-dock, .mv-sheet { display: none; }
-.mv-detail { overflow: auto; max-height: min(72vh, 680px); }
+.mv-detail { overflow: auto; max-height: min(calc(100dvh - 23rem), 640px); }
 
 @media (max-width: 640px) {
   #v-map .lead { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-  .mv-stage { display: block; position: relative; height: calc(100dvh - 13.5rem - var(--tabbar, 66px)); min-height: 18rem; }
+  #v-map .vh { margin-bottom: 4px; }
+  #v-map .lead { -webkit-line-clamp: 2; margin-bottom: 6px; }
+  .mv-stage { display: block; position: relative; height: calc(100dvh - 24.5rem - var(--tabbar, 66px)); min-height: 16rem; }
   .mv-map { height: 100%; min-height: 0; border-radius: 12px; }
   .mv-stage > .mv-detail { display: none; }
   .mv-sheet .mv-detail { display: block; max-height: none; border: 0; padding: 0; background: transparent; }
@@ -99,7 +101,7 @@
   .mv-sheet-h b { font-size: .9rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .mv-x { width: 2rem; height: 2rem; border-radius: 999px; border: 1px solid rgba(162, 74, 255, .55); background: rgba(255,255,255,.08); color: #fff; font-size: 1.2rem; cursor: pointer; }
   .mv-sheet-b { overflow: auto; padding: .45rem .65rem .7rem; }
-  .mv-map .leaflet-bottom.leaflet-left { bottom: auto; top: 4.8rem; max-width: 58%; }
+  .leaflet-control-attribution { max-width: min(16rem, 62vw); }
 }
 
 /* 3D: the map replaces the scene area; phone detail uses the existing bottom sheet. */
@@ -107,26 +109,22 @@
 body.map-on .geo-map { display: block; position: absolute; inset: 0; z-index: 15; }
 .geo-map-canvas { position: absolute; inset: 0; }
 body.map-on .geo-map > .map-detail {
-  position: absolute; z-index: 500; inset-block-end: .55rem; inset-inline-end: .55rem;
-  width: min(22rem, 44%); max-height: 46%; overflow: auto;
+  position: absolute; z-index: 500; inset-block-start: 8.5rem; inset-inline-end: .55rem;
+  width: min(20rem, 42%); max-height: min(42%, 22rem); overflow: auto;
 }
 body.map-on .vtl, body.map-on .camtools, body.map-on .labels, body.map-on #fallback { visibility: hidden; pointer-events: none; }
-body.map-on .geo-map .leaflet-bottom.leaflet-left { max-width: min(22rem, 48%); }
-html[dir="rtl"] body.map-on .geo-map .leaflet-bottom.leaflet-left { left: auto; right: 0; }
+.leaflet-control-attribution { max-width: min(18rem, 46vw); }
 @media (min-width: 901px) {
   body.map-on .geo-map .leaflet-top { top: calc(var(--th) + .25rem); }
   body.map-on .geo-map .mv-layer,
   body.map-on .geo-map .mv-back,
   body.map-on .geo-map .mv-fail { top: calc(var(--th) + .35rem); }
-  body.map-on .geo-map > .map-detail { inset-block-end: calc(var(--fh) + .45rem); }
-  body.map-on .geo-map .leaflet-bottom.leaflet-left { bottom: calc(var(--fh) + .2rem); max-width: 48%; }
-  html[dir="rtl"] body.map-on .geo-map .leaflet-bottom.leaflet-left { left: auto; right: 0; }
+  body.map-on .geo-map > .map-detail { inset-block-start: calc(var(--th) + 8rem); }
 }
 @media (max-width: 640px) {
   body.map-on .geo-map > .map-detail { display: none !important; }
   .m-sheet .map-detail { display: block !important; position: static; width: auto; max-height: none; inset: auto; background: transparent; border: 0; padding: 0; }
   body.map-on .mv-back, #cam-map { display: none; }
-  body.map-on .leaflet-bottom.leaflet-left { bottom: auto; top: 4.6rem; left: .35rem; right: auto; max-width: 55%; }
   .m-dock { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .m-chip { flex: 0 1 auto; }
 }

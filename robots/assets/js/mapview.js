@@ -227,7 +227,7 @@
       if (link && L.Icon && L.Icon.Default) {
         try { L.Icon.Default.imagePath = link.href.replace(/leaflet\.css(?:\?.*)?$/, 'images'); } catch (e) { /* ignore */ }
       }
-      var z = window.matchMedia('(max-width: 640px)').matches ? 13 : 14;
+      var z = window.matchMedia('(max-width: 640px)').matches ? 12 : 13;
       map = L.map(el, {
         center: CENTER,
         zoom: z,
@@ -239,7 +239,10 @@
         attributionControl: true,
         scrollWheelZoom: true
       });
-      if (map.attributionControl) map.attributionControl.setPrefix('Leaflet');
+      if (map.attributionControl) {
+        map.attributionControl.setPrefix('Leaflet');
+        map.attributionControl.setPosition('topleft');
+      }
       if (el.getAttribute) el.setAttribute('aria-label', t('map_aria'));
       setBase('osm');
       addMarkers();
