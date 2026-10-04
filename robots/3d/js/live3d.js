@@ -55,7 +55,9 @@ export function createLive(h) {
   function applyPointing() {
     const p = look(); const SC = h.SC();
     if (SC && SC.setDishPointing) SC.setDishPointing(p.az, p.visible ? p.el : 0);
-    const dp = $('#lbl-dish .dp'); if (dp) dp.innerHTML = p.visible ? '<span class="live-badge sm"><i></i>LIVE</span> ' + esc(satLabel(satLon)) + ' · Az ' + ltr(f1(p.az) + '°') + ' El ' + ltr(f1(p.el) + '°') : esc(t('lv_pt_below'));
+    const html = p.visible ? '<span class="live-badge sm"><i></i>LIVE</span> ' + esc(satLabel(satLon)) + ' · Az ' + ltr(f1(p.az) + '°') + ' El ' + ltr(f1(p.el) + '°') : esc(t('lv_pt_below'));
+    const dp = $('#lbl-dish .dp'); if (dp) dp.innerHTML = html;
+    const sr = $('#sat-readout .sr-pt'); if (sr) sr.innerHTML = html;
     return p;
   }
   function renderPointing() {

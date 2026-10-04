@@ -620,6 +620,8 @@ function relabel() {
   $('#lbl-dish .dn').textContent = t('lbl_dish');
   const ku = $('#lbl-ku .kn'); if (ku) ku.textContent = t('lbl_ku');
   $('#lbl-gate .gn').textContent = t('lbl_gate');
+  const sd = $('#sat-readout .sr-dish'); if (sd) sd.textContent = t('lbl_dish');
+  const sk = $('#sat-readout .sr-ku'); if (sk) sk.textContent = t('lbl_ku');
 }
 function showAz(m) { azBox.hidden = false; azBox.className = 'da ' + (parseFloat(m.az.err) > 0.5 ? 'bad' : 'good'); azBox.innerHTML = '<b>' + esc(t('az_reading')) + '</b> ' + ltr(m.az.az + '°') + (m.az.ref ? ' <span class="muted tiny">(' + esc(t('lv_dp')) + ' ' + ltr(m.az.ref + '°') + ')</span>' : '') + '<br>' + esc(t('f_azerr')) + ' ' + ltr(m.az.err + '°') + ' ' + (parseFloat(m.az.err) > 0.5 ? '⚠' : '✓'); azBox.dataset.mid = m.id; }
 function showHeat(m) {
@@ -669,7 +671,52 @@ function applyStatic() {
   $('#fs-t').textContent = t(document.fullscreenElement ? 'fs_off' : 'fs_on');
   $('#wa').title = 'WhatsApp';
 }
-function renderAll() { applyStatic(); renderTemplates(); if (LV) LV.render(); renderQueue(); renderHud(); renderCmd(); renderAlerts(); renderAudit(); renderAbout(); relabel(); renderRobotBits(); updateDots(); selectTab(S.tab); if (S.report) paintReport(); }
+/* Narrow screens: one chip opens one bottom sheet. Panels are moved, never stacked. */
+const SHEET_SEL = { live: '#livebar', sat: '#sat-readout', info: '#geo-banner', tasks: '#hud' };
+const sheetHome = {};
+let sheetKind = null;
+function park(sel) {
+  const el = $(sel); if (!el) return null;
+  if (!sheetHome[sel]) sheetHome[sel] = { parent: el.parentNode, next: el.nextSibling };
+  return el;
+}
+function restoreSheetNode(sel) {
+  const el = $(sel), home = sheetHome[sel]; if (!el || !home || el.parentNode === home.parent) return;
+  if (home.next && home.next.parentNode === home.parent) home.parent.insertBefore(el, home.next);
+  else home.parent.appendChild(el);
+}
+function closeSheet() {
+  if (sheetKind) restoreSheetNode(SHEET_SEL[sheetKind]);
+  sheetKind = null;
+  const sh = $('#m-sheet'); if (sh) sh.hidden = true;
+  $$('.m-chip').forEach(b => b.setAttribute('aria-pressed', 'false'));
+}
+function openSheet(kind) {
+  if (!window.matchMedia('(max-width: 640px)').matches) return;
+  if (sheetKind === kind) { closeSheet(); return; }
+  if (sheetKind) restoreSheetNode(SHEET_SEL[sheetKind]);
+  const el = park(SHEET_SEL[kind]); if (!el) return;
+  sheetKind = kind;
+  $('#m-sheet-b').appendChild(el);
+  el.hidden = false;
+  $('#m-sheet').hidden = false;
+  $$('.m-chip').forEach(b => b.setAttribute('aria-pressed', b.dataset.sheet === kind ? 'true' : 'false'));
+  refreshSheetTitle();
+  const x = $('#m-sheet-x'); if (x) x.focus();
+}
+function refreshSheetTitle() {
+  if (!sheetKind || !$('#m-sheet') || $('#m-sheet').hidden) return;
+  const chip = $('.m-chip[data-sheet="' + sheetKind + '"] span');
+  if (chip) $('#m-sheet-t').textContent = chip.textContent;
+}
+function bindSheets() {
+  $$('.m-chip').forEach(b => b.addEventListener('click', () => openSheet(b.dataset.sheet)));
+  const x = $('#m-sheet-x'); if (x) x.addEventListener('click', closeSheet);
+  const mq = window.matchMedia('(max-width: 640px)');
+  const onMq = () => { if (!mq.matches) closeSheet(); };
+  if (mq.addEventListener) mq.addEventListener('change', onMq); else if (mq.addListener) mq.addListener(onMq);
+}
+function renderAll() { applyStatic(); renderTemplates(); if (LV) LV.render(); renderQueue(); renderHud(); renderCmd(); renderAlerts(); renderAudit(); renderAbout(); relabel(); renderRobotBits(); updateDots(); selectTab(S.tab); if (S.report) paintReport(); refreshSheetTitle(); }
 function setLang(l) { lang = l; try { localStorage.setItem(LS_LANG, l); } catch (e) { /* ignore */ } const u = new URL(location.href); u.searchParams.set('lang', l); history.replaceState(null, '', u); renderAll(); }
 
 function setPres(on) {
@@ -733,6 +780,7 @@ async function init() {
   if (LV) { LV.init(); LV.applyPointing(); }
   if (webgl) SC.speedMul = SPEED;
   /* events */
+  bindSheets();
   $$('#langs button').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
   $$('#tabs [role=tab]').forEach(b => b.addEventListener('click', () => selectTab(b.dataset.tab)));
   $('#pres').addEventListener('click', () => setPres(!document.body.classList.contains('pres')));
@@ -753,6 +801,7 @@ async function init() {
   $('#rp-close').addEventListener('click', closeReport);
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && !$('#report').hidden) { closeReport(); return; }
+    if (e.key === 'Escape' && sheetKind) { closeSheet(); return; }
     if (/^(INPUT|SELECT|TEXTAREA)$/.test((e.target || {}).tagName) || e.ctrlKey || e.metaKey || e.altKey) return;
     const k = e.key.toLowerCase();
     if (k === 'p') setPres(!document.body.classList.contains('pres'));

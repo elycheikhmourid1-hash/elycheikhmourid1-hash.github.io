@@ -7,6 +7,7 @@
     ar: {
       geo_note: 'سيناريو توضيحي مبني على معلومات عامة عن المحطات الأرضية في المدار الثابت بالنسبة للأرض — ليس بثاً حياً من أي محطة حقيقية، وغير متصل بأي مشغّل.',
       geo_context: 'خلفية عامة فقط: افتُتحت محطة أرضية في توجونين قرب نواكشوط عام 1986 لخدمة عربسات-1. أجيال لاحقة في المدار الثابت، مثل Arabsat Badr-8، على ارتفاع نحو 36,000 كم وبنطاقي C وKu. الطقس وزوايا التوجيه هنا من وسط مدينة نواكشوط كمثال. هذا العرض لا يراقب تلك المحطة ولا أي مشغّل.',
+      m_live: 'LIVE', m_sat: 'القمر', m_info: 'ملاحظة', m_tasks: 'مهام', m_close: 'إغلاق',
       name_dish: 'GEO dish (C-band)',
       name_ku: 'Ku-band feed/LNB',
       name_badr: 'Arabsat Badr-8 (example)',
@@ -122,6 +123,7 @@
     fr: {
       geo_note: 'Scénario illustratif fondé sur des informations publiques au sujet des stations terriennes GEO — ce n’est pas un flux en direct d’une station réelle, et il n’est connecté à aucun opérateur.',
       geo_context: 'Contexte public seulement : une station terrienne à Toujounine, près de Nouakchott, a été inaugurée en 1986 pour Arabsat-1. Des générations GEO plus récentes, comme Arabsat Badr-8, se trouvent à environ 36 000 km et utilisent les bandes C et Ku. La météo et les angles de visée utilisent les coordonnées du centre-ville de Nouakchott, à titre d’exemple. Cette démo ne surveille pas cette station ni aucun opérateur.',
+      m_live: 'LIVE', m_sat: 'Satellite', m_info: 'Info', m_tasks: 'Tâches', m_close: 'Fermer',
       name_dish: 'GEO dish (C-band)',
       name_ku: 'Ku-band feed/LNB',
       name_badr: 'Arabsat Badr-8 (example)',
@@ -237,6 +239,7 @@
     en: {
       geo_note: 'Illustrative scenario based on public information about GEO ground stations — not a live feed from any real station, and not connected to any operator.',
       geo_context: 'Public background only: an earth station at Toujounine, near Nouakchott, was inaugurated in 1986 for Arabsat-1. Later GEO satellites such as Arabsat Badr-8 fly about 36,000 km up and use C-band and Ku-band. Weather and look angles here use Nouakchott city-centre coordinates as an example. This demo does not monitor that station or any operator.',
+      m_live: 'LIVE', m_sat: 'Satellite', m_info: 'Info', m_tasks: 'Tasks', m_close: 'Close',
       name_dish: 'GEO dish (C-band)',
       name_ku: 'Ku-band feed/LNB',
       name_badr: 'Arabsat Badr-8 (example)',
