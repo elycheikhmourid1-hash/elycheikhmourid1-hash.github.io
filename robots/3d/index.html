@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#06060d">
 <meta name="color-scheme" content="dark">
-<meta name="description" content="AICore Robotics Ops 3D — SIMULATION. VSAT ground-station robot inspection with human approval.">
+<meta name="description" content="AICore Robotics Ops 3D — SIMULATION. Illustrative GEO earth-station robot inspection with human approval. Not a live feed from any real station.">
 <title>عمليات الروبوتات ثلاثي الأبعاد — AICore | عرض تجريبي</title>
 <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="app3d.css">
@@ -68,6 +68,10 @@
       <div class="lb-legend"><span class="live-badge" title="" id="lb-live"><i></i>LIVE / حي</span><span class="lb-t" data-i18n="lv_legend_live_s"></span><span class="sim-tag" data-i18n="lv_sim_tag"></span><span class="lb-t" data-i18n="lv_legend_sim_s"></span></div>
       <div class="lb-chips" id="lb-chips"></div>
     </div>
+    <div class="geo-banner" role="note">
+      <p class="geo-note" data-i18n="geo_note"></p>
+      <p class="geo-context" data-i18n="geo_context"></p>
+    </div>
     <div id="heat-legend" class="heat-legend" hidden><b data-i18n="heat_legend"></b><i></i><span><bdi class="ltr">30 °C</bdi><bdi class="ltr">70 °C</bdi></span></div>
   </div>
   <div id="fallback" class="fallback" hidden>
@@ -119,11 +123,14 @@
       <h2 class="sec" id="lv-wx-h"><span data-i18n="lv_wx_title"></span> <span class="live-badge"><i></i>LIVE / حي</span></h2>
       <div class="wx-tools">
         <label><span data-i18n="lv_wx_thr"></span><input type="number" id="wx-thr" min="5" max="150" step="1" inputmode="numeric"></label>
+        <label><span data-i18n="lv_wx_rain_thr"></span><input type="number" id="wx-rain" min="0" max="50" step="0.1" inputmode="decimal"></label>
         <button class="btn btn-ghost btn-sm" id="wx-refresh" type="button"><svg class="ico"><use href="#i-reset"/></svg><span data-i18n="lv_wx_refresh"></span></button>
       </div>
       <div class="wx-cards" id="wx-cards"></div>
       <p class="tiny muted wx-note" data-i18n="lv_wx_src"></p>
       <p class="tiny muted wx-note" data-i18n="lv_wx_thr_note"></p>
+      <p class="tiny muted wx-note" data-i18n="lv_wx_rain_note"></p>
+      <p class="tiny wx-note" id="wx-adv" role="status"></p>
     </section>
 
     <section class="lv-sec" id="lv-pt" aria-labelledby="lv-pt-h">
@@ -230,6 +237,7 @@
 
 <script src="js/i18n3d.js"></script>
 <script src="../assets/js/i18n-live.js"></script>
+<script src="../assets/js/i18n-geo.js"></script>
 <script src="../assets/js/weather.js"></script>
 <script src="../assets/js/geo.js"></script>
 <script src="js/nlp.js"></script>

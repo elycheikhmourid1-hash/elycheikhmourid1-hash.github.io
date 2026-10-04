@@ -15,12 +15,24 @@ export function createLive(h) {
   const f1 = x => (Math.round(x * 10) / 10).toFixed(1);
 
   /* ================= 1. weather ================= */
-  const armed = { wind: false };
+  const armed = { wind: false, rain: false };
   function renderWeather() {
     const host = $('#wx-cards'); if (!host) return;
     host.innerHTML = WX.SITES.map(s => WX.renderCard(s.id, t, esc, { clock: h.fClock })).join('');
     const thr = $('#wx-thr'); if (thr && document.activeElement !== thr) thr.value = WX.windThreshold();
+    const rth = $('#wx-rain'); if (rth && document.activeElement !== rth) rth.value = WX.rainThreshold();
+    renderAdvisory();
     renderBar();
+  }
+  function renderAdvisory() {
+    const el = $('#wx-adv'); if (!el) return;
+    const g = WX.get('nkc');
+    if (!g.ok) { el.textContent = ''; return; }
+    const parts = [];
+    if (WX.rainExceeded(g.v, WX.rainThreshold())) parts.push(t('lv_rain_hot'));
+    else parts.push(t('lv_rain_ok', { v: WX.f1(g.v.rain), thr: String(WX.rainThreshold()) }));
+    if (WX.windExceeded(g.v, WX.windThreshold())) parts.push(t('lv_wind_hot'));
+    el.textContent = parts.join(' ');
   }
   function checkWind() {
     const g = WX.get('nkc'); if (!g.ok) return;
@@ -28,11 +40,18 @@ export function createLive(h) {
     if (hot && !armed.wind) { armed.wind = true; h.raiseLiveAlert('wind', { w: Math.round(g.v.wind), g: g.v.gust == null ? '—' : Math.round(g.v.gust), thr, site: 'nkc', obs: g.obs }); }
     else if (!hot) armed.wind = false;
   }
+  /* Rain-fade advisory from live Nouakchott precipitation. The drafted mission stays pending — raiseLiveAlert does not start the robot. */
+  function checkRain() {
+    const g = WX.get('nkc'); if (!g.ok) return;
+    const thr = WX.rainThreshold(), hot = WX.rainExceeded(g.v, thr);
+    if (hot && !armed.rain) { armed.rain = true; h.raiseLiveAlert('rain', { rain: WX.f1(g.v.rain), thr, w: Math.round(g.v.wind || 0), site: 'nkc', obs: g.obs, flags: { rain: true } }); }
+    else if (!hot) armed.rain = false;
+  }
 
   /* ================= 2. dish pointing ================= */
-  let satLon = (() => { const v = parseFloat(ls.get(LS.sat)); return GEO.SAT_LONS.includes(v) ? v : 13; })();
+  let satLon = (() => { const v = parseFloat(ls.get(LS.sat)); return GEO.SAT_LONS.includes(v) ? v : GEO.SAT_EXAMPLE_LON; })();
   const look = () => GEO.lookAngles(GEO.STATION.lat, GEO.STATION.lon, satLon);
-  const satLabel = l => GEO.lonLabel(l);
+  const satLabel = l => GEO.lonLabel(l) + (GEO.SAT_EXAMPLES[l] === 'badr8' ? ' — ' + t('name_badr') : '');
   function applyPointing() {
     const p = look(); const SC = h.SC();
     if (SC && SC.setDishPointing) SC.setDishPointing(p.az, p.visible ? p.el : 0);
@@ -248,6 +267,7 @@ export function createLive(h) {
     $('#sat-sel').addEventListener('change', e => setSat(parseFloat(e.target.value)));
     $('#wx-refresh').addEventListener('click', () => { h.toast(t('lv_wx_refreshing')); WX.fetchNow().then(() => h.toast(WX.get('nkc').ok ? t('lv_wx_refreshed') : t('lv_wx_unavail'))); });
     $('#wx-thr').addEventListener('change', e => { WX.setWindThreshold(e.target.value); h.toast(t('lv_saved')); e.target.value = WX.windThreshold(); checkWind(); renderWeather(); });
+    const rainIn = $('#wx-rain'); if (rainIn) rainIn.addEventListener('change', e => { WX.setRainThreshold(e.target.value); h.toast(t('lv_saved')); e.target.value = WX.rainThreshold(); checkRain(); renderWeather(); });
     $('#cam-start').addEventListener('click', startCam);
     $('#cam-stop').addEventListener('click', () => stopCam());
     $('#sn-cab').addEventListener('change', e => { ls.set(LS.cab, e.target.value); h.toast(t('lv_saved')); sn.armed = false; onSensorUpdate(); });
@@ -268,7 +288,7 @@ export function createLive(h) {
       dlg.close(); sn.armed = false; startSensor();
     });
     $('#sn-clear').addEventListener('click', () => { [LS.url, LS.key, LS.dev].forEach(ls.del); sn.reading = null; sn.armed = false; dlg.close(); startSensor(); });
-    WX.onChange(() => { renderWeather(); checkWind(); });
+    WX.onChange(() => { renderWeather(); checkWind(); checkRain(); });
     setInterval(() => { renderWeather(); renderSensor(); }, 15000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden && sn.cfg && !sn.sim) pollSensor(); });
   }
@@ -287,7 +307,7 @@ export function createLive(h) {
     driftText() { return $('#drift-out') && $('#drift-out').textContent; },
     cabReading(cab) { const cur = current(); return cur && cab === snCab() ? { temp: cur.temp, kind: cur.kind, dev: cur.dev } : null; },
     sensorCab: snCab, sensorThr: snThr,
-    resetArm() { armed.wind = false; sn.armed = false; },
+    checkRain, resetArm() { armed.wind = false; armed.rain = false; sn.armed = false; },
     sensorState() { return { state: sn.state, sim: sn.sim, polls: sn.polls, err: sn.err, cfg: !!sn.cfg, current: current() }; },
     cameraState() { return { state: cam.state, err: cam.err, inferences: cam.inferences, persons: cam.persons, veh: cam.veh, ani: cam.ani, alerts: cam.alerts, backend: cam.backend, loadMs: cam.loadMs, classes: cam.lastClasses.slice(), streak: cam.streak }; },
     setDriftValue(v) { driftVal = v; }, getDriftValue() { return driftVal; }

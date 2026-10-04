@@ -185,6 +185,7 @@ export async function createScene(container, opts = {}) {
   dishTilt.rotation.x = Math.PI / 2 - dishEl;      // bowl axis → (0, sin el, cos el)
   azGroup.rotation.y = dishAz;
   const dishAnchor = new THREE.Vector3(LAYOUT.dish.x, 5.7, LAYOUT.dish.z);
+  const kuAnchor = new THREE.Vector3(LAYOUT.dish.x + 2.5, 3.15, LAYOUT.dish.z + 1.7);
   const dishCenter = new THREE.Vector3(LAYOUT.dish.x, 4.7, LAYOUT.dish.z);
 
   /* ---------------- fiber-glow lines ---------------- */
@@ -380,7 +381,7 @@ export async function createScene(container, opts = {}) {
       tween = { t: 0, dur: 1.5, p0: camera.position.clone(), t0: controls.target.clone(), p1: new THREE.Vector3(...p.p), t1: new THREE.Vector3(...p.t) };
     },
     project(v3) { tmp2.copy(v3).project(camera); return { x: (tmp2.x * 0.5 + 0.5) * viewW, y: (-tmp2.y * 0.5 + 0.5) * viewH, z: tmp2.z }; },
-    dishAnchor, cabAnchor(id) { return new THREE.Vector3(LAYOUT.cab[id].x, CAB_H + 0.35, LAYOUT.cab[id].z + 0.2); },
+    dishAnchor, kuAnchor, cabAnchor(id) { return new THREE.Vector3(LAYOUT.cab[id].x, CAB_H + 0.35, LAYOUT.cab[id].z + 0.2); },
     cabFront(id) { return new THREE.Vector3(LAYOUT.cab[id].x, 1.4, LAYOUT.cab[id].z + 0.6); },
     gateAnchor: new THREE.Vector3(0, 3.7, LAYOUT.gate.z),
     robotAnchor(id, out) { const p = robots[id].root.position; return (out || new THREE.Vector3()).set(p.x, 2.55, p.z); },
