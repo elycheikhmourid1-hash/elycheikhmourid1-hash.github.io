@@ -1,4 +1,5 @@
-/* AICore Robotics Ops — demo. Simulation (fictional sites/robots) + LIVE weather. Runs in the browser; the ONLY network call is Open-Meteo (assets/js/weather.js). No storage of operator data. */
+/* AICore Robotics Ops — demo. Simulation (fictional sites/robots) + LIVE weather.
+   Network: Open-Meteo; map tiles (OpenStreetMap or Esri) only while the Map view is open, current view only; optional Supabase sensor on the 3D page. */
 (function () {
   'use strict';
   var D = window.DATA, I = window.I18N, WX = window.WX;
@@ -349,7 +350,7 @@
   }
 
   /* ---------- rendering: shared ---------- */
-  function afterChange() { renderStatus(); renderKpis(); renderRobotList(); renderBoard(); renderAlerts(); renderAudit(); renderNavDots(); renderPlanHead(); }
+  function afterChange() { renderStatus(); renderKpis(); renderRobotList(); renderBoard(); renderAlerts(); renderAudit(); renderNavDots(); renderPlanHead(); syncMap(); }
 
   function siteStatus(id) {
     if (S.alerts.some(function (a) { return a.site === id && a.status === 'open'; })) return 'att';
@@ -657,14 +658,119 @@
   }
   function waHref() { return D.whatsapp + '?text=' + encodeURIComponent(t('ct_wa_text')); }
 
+  /* ---------- real map (Leaflet). Pins are EXAMPLE; approval reuses the mission/alert buttons. ---------- */
+  var mvApi = null, mvHome = null, mvOpen = false;
+  function mapTaskHtml(siteId) {
+    if (!siteId) return '<p class="small">' + esc(t('map_no_task')) + '</p>';
+    var awaiting = S.missions.filter(function (m) { return m.site === siteId && m.status === 'awaiting'; });
+    if (awaiting.length) {
+      var m = awaiting[0];
+      return (m.live ? '<p class="tiny"><span class="live-badge"><i></i>LIVE / حي</span></p>' : '') +
+        '<p><b>' + esc(t('tpl.' + m.tpl + '.name')) + '</b> ' + ltr(m.id) + '</p>' +
+        '<p class="small muted">' + esc(t('site.' + m.site)) + ' · ' + esc(t('robot')) + ' ' + ltr(m.robot) + '</p>' +
+        '<p class="hint tiny">' + esc(t('hint_awaiting')) + '</p>' +
+        '<div class="acts"><button class="btn btn-primary btn-sm" type="button" data-mv-approve="' + m.id + '"><svg class="ico"><use href="#i-check"/></svg>' + esc(t('approve')) + '</button>' +
+        '<button class="btn btn-ghost btn-sm" type="button" data-mv-reject="' + m.id + '"><svg class="ico"><use href="#i-x"/></svg>' + esc(t('reject')) + '</button></div>' +
+        (awaiting.length > 1 ? '<p class="tiny muted">' + esc(t('map_more', { n: awaiting.length - 1 })) + '</p>' : '');
+    }
+    var open = S.alerts.filter(function (a) { return a.site === siteId && a.status === 'open'; });
+    if (open.length) {
+      var a = open[0];
+      var prefix = (a.site === 'gs' && (I[lang]['al.' + a.type + '.gs.title'] != null || I.ar['al.' + a.type + '.gs.title'] != null)) ? 'al.' + a.type + '.gs.' : 'al.' + a.type + '.';
+      var vars = { v: a.v, thr: a.thr || '', site: t('lv_wx_site_' + (WX_OF[a.site] || 'nkc')), robot: a.robot };
+      return '<p class="tiny">' + (a.live ? '<span class="live-badge"><i></i>LIVE / حي</span> ' : '') + esc(t('sev.' + a.sev)) + '</p>' +
+        '<p><b>' + esc(t(prefix + 'title')) + '</b> ' + ltr(a.id) + '</p>' +
+        '<p class="small">' + esc(t(prefix + 'detail', vars)) + '</p>' +
+        '<p class="hint tiny">' + esc(t('al_draft_note')) + '</p>' +
+        '<div class="acts"><button class="btn btn-primary btn-sm" type="button" data-mv-aa="' + a.id + '"><svg class="ico"><use href="#i-check"/></svg>' + esc(t('al_approve')) + '</button>' +
+        '<button class="btn btn-ghost btn-sm" type="button" data-mv-ad="' + a.id + '">' + esc(t('al_dismiss')) + '</button></div>';
+    }
+    return '<p class="small">' + esc(t('map_no_task')) + '</p>';
+  }
+  function renderMvDetail() {
+    var host = $('#mv-detail'); if (!host || !window.MapView) return;
+    var id = mvApi ? mvApi.selected() : 'gs';
+    var p = MapView.point(id) || MapView.POINTS[0];
+    host.innerHTML = '<h2 class="mv-h">' + esc(t('map_pt_' + p.id)) + '</h2>' +
+      '<p class="mv-flags"><span class="mv-flag">EXAMPLE · SIMULATION</span></p>' +
+      '<h3 class="mv-h3">' + esc(t('map_task_h')) + '</h3>' + mapTaskHtml(p.id === 'ex1' || p.id === 'ex2' ? null : p.id) +
+      MapView.liveHtml({ t: t, esc: esc, ltr: ltr, lat: p.lat, lon: p.lon });
+    var title = $('#mv-sheet-t'); if (title) title.textContent = t('map_pt_' + p.id);
+    paintLayerButtons();
+  }
+  function paintLayerButtons() {
+    if (!mvApi) return;
+    var sat = mvApi.mode() === 'sat';
+    var label = t(sat ? 'map_streets' : 'map_sat');
+    ['#mv-layer', '#mv-chip-layer-t'].forEach(function (sel) { var n = $(sel); if (n) n.textContent = label; });
+    var layer = $('#mv-layer'), chip = $('#mv-chip-layer');
+    if (layer) { layer.setAttribute('aria-pressed', sat ? 'true' : 'false'); layer.setAttribute('aria-label', t('map_layer_aria')); }
+    if (chip) chip.setAttribute('aria-pressed', sat ? 'true' : 'false');
+  }
+  function mapAlertIds() {
+    var ids = [];
+    S.alerts.forEach(function (a) {
+      if (a.status === 'open' && (a.site === 'gs' || a.site === 'wh') && ids.indexOf(a.site) < 0) ids.push(a.site);
+    });
+    return ids;
+  }
+  function syncMap() {
+    renderMvDetail();
+    if (!mvApi) return;
+    mvApi.setAlertPoints(mapAlertIds());
+    mvApi.redrawLabels();
+  }
+  function mvRestore() {
+    var el = $('#mv-detail'); if (!el || !mvHome || el.parentNode === mvHome.parent) return;
+    if (mvHome.next && mvHome.next.parentNode === mvHome.parent) mvHome.parent.insertBefore(el, mvHome.next);
+    else mvHome.parent.appendChild(el);
+  }
+  function mvCloseSheet() {
+    mvRestore();
+    mvOpen = false;
+    var sh = $('#mv-sheet'); if (sh) sh.hidden = true;
+    var c = $('#mv-chip-point'); if (c) c.setAttribute('aria-pressed', 'false');
+  }
+  function mvShowSheet() {
+    if (!window.matchMedia('(max-width: 640px)').matches) return;
+    var el = $('#mv-detail'); if (!el) return;
+    if (!mvHome) mvHome = { parent: el.parentNode, next: el.nextSibling };
+    if (mvOpen) { mvCloseSheet(); return; }
+    $('#mv-sheet-b').appendChild(el);
+    $('#mv-sheet').hidden = false;
+    mvOpen = true;
+    $('#mv-chip-point').setAttribute('aria-pressed', 'true');
+    if (mvApi) mvApi.nudge();
+    var x = $('#mv-sheet-x'); if (x) x.focus();
+  }
+  function ensureMap() {
+    if (!window.MapView || !$('#mv-canvas')) return;
+    if (!mvApi) {
+      mvApi = MapView.create({
+        el: '#mv-canvas', failEl: '#mv-fail', t: t,
+        onSelect: function (id, fromUser) {
+          renderMvDetail();
+          if (fromUser && window.matchMedia('(max-width: 640px)').matches && !mvOpen) mvShowSheet();
+        },
+        onBase: function () { paintLayerButtons(); }
+      });
+    }
+    mvApi.start();
+    mvApi.setAlertPoints(mapAlertIds());
+    mvApi.redrawLabels();
+    renderMvDetail();
+    setTimeout(function () { if (mvApi) mvApi.invalidate(); }, 80);
+  }
+
   /* ---------- routing / language ---------- */
-  var routes = ['dashboard', 'missions', 'alerts', 'audit', 'roadmap'];
+  var routes = ['dashboard', 'missions', 'alerts', 'audit', 'roadmap', 'map'];
   function route() {
     var r = (location.hash.replace(/^#\/?/, '') || 'dashboard'); if (routes.indexOf(r) < 0) r = 'dashboard';
     S.route = r;
     $$('.view').forEach(function (v) { v.hidden = v.getAttribute('data-view') !== r; });
     $$('#nav a').forEach(function (a) { if (a.getAttribute('data-route') === r) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     if (r === 'dashboard') { startLoop(); updatePositions(); } else stopLoop();
+    if (r === 'map') ensureMap(); else if (mvApi) mvApi.stop();
     window.scrollTo(0, 0);
   }
   function applyStatic() {
@@ -682,7 +788,7 @@
   function renderAll() {
     applyStatic(); buildMap(); renderSiteTabs(); renderPlanHead(); renderPlan(); renderRobotList(); renderKpis();
     $('#roles-dash').innerHTML = rolesHTML(); $('#roles-audit').innerHTML = rolesHTML();
-    renderTemplates(); renderBoard(); renderAlerts(); renderAudit(); renderRoadmap(); renderNavDots(); renderWeather(); renderPointing();
+    renderTemplates(); renderBoard(); renderAlerts(); renderAudit(); renderRoadmap(); renderNavDots(); renderWeather(); renderPointing(); syncMap();
     if (openRid) { var m = S.missions.filter(function (x) { return x.id === openRid; })[0]; if (m) $('#paper').innerHTML = reportBody(m); }
   }
   function setLang(l) {
@@ -712,8 +818,9 @@
       if (GEO.SAT_LONS.indexOf(v) < 0) return;
       try { localStorage.setItem(LS_SAT, String(v)); } catch (err) { /* ignore */ }
       renderPointing();
+      if (S && S.route === 'map') renderMvDetail();
     });
-    WX.onChange(function () { renderWeather(); checkAdvisories(); });
+    WX.onChange(function () { renderWeather(); checkAdvisories(); if (S && S.route === 'map') renderMvDetail(); });
     setInterval(renderWeather, 30000);
     var q2 = /[?&]wxms=(\d+)/.exec(location.search); WX.start(q2 ? { refreshMs: +q2[1] } : {});
     $('#reset').addEventListener('click', resetDemo);
@@ -722,7 +829,26 @@
     $('#rp-print').addEventListener('click', function () { window.print(); });
     $('#rp-dl').addEventListener('click', downloadReport);
     $('#rp-close').addEventListener('click', closeReport);
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('#report').hidden) closeReport(); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !$('#report').hidden) { closeReport(); return; }
+      if (e.key === 'Escape' && mvOpen) mvCloseSheet();
+    });
+    var detail = $('#mv-detail');
+    if (detail) detail.addEventListener('click', function (e) {
+      var n = e.target.closest('[data-mv-approve],[data-mv-reject],[data-mv-aa],[data-mv-ad]'); if (!n) return;
+      if (n.hasAttribute('data-mv-approve')) approveMission(n.getAttribute('data-mv-approve'));
+      else if (n.hasAttribute('data-mv-reject')) rejectMission(n.getAttribute('data-mv-reject'));
+      else if (n.hasAttribute('data-mv-aa')) approveAlert(n.getAttribute('data-mv-aa'));
+      else dismissAlert(n.getAttribute('data-mv-ad'));
+    });
+    function flipLayer() { if (mvApi) mvApi.toggleBase(); }
+    var layerBtn = $('#mv-layer'); if (layerBtn) layerBtn.addEventListener('click', flipLayer);
+    var layerChip = $('#mv-chip-layer'); if (layerChip) layerChip.addEventListener('click', flipLayer);
+    var pointChip = $('#mv-chip-point'); if (pointChip) pointChip.addEventListener('click', mvShowSheet);
+    var sheetX = $('#mv-sheet-x'); if (sheetX) sheetX.addEventListener('click', mvCloseSheet);
+    var mq = window.matchMedia('(max-width: 640px)');
+    var onMq = function () { if (!mq.matches) mvCloseSheet(); };
+    if (mq.addEventListener) mq.addEventListener('change', onMq); else if (mq.addListener) mq.addListener(onMq);
     window.addEventListener('hashchange', route);
     document.addEventListener('visibilitychange', function () { if (document.hidden) stopLoop(); else if (S.route === 'dashboard') startLoop(); });
     route(); setInterval(tick, 1000); $('#clock').textContent = fClock(Date.now());

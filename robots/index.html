@@ -10,6 +10,8 @@
 <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/css/app.css">
 <link rel="stylesheet" href="assets/css/live.css">
+<link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css" data-leaflet>
+<link rel="stylesheet" href="assets/css/mapview.css">
 </head>
 <body>
 <!-- icon sprite -->
@@ -69,6 +71,7 @@
     </a>
     <nav class="tabs" id="nav" aria-label="Main">
       <a href="#/dashboard" data-route="dashboard"><svg class="ico"><use href="#i-dash"/></svg><span data-i18n="nav_dashboard"></span></a>
+      <a href="#/map" data-route="map"><svg class="ico"><use href="#i-globe"/></svg><span data-i18n="nav_map"></span></a>
       <a href="#/missions" data-route="missions"><svg class="ico"><use href="#i-mission"/></svg><span data-i18n="nav_missions"></span><i class="dot" id="nb-missions" hidden></i></a>
       <a href="#/alerts" data-route="alerts"><svg class="ico"><use href="#i-alert"/></svg><span data-i18n="nav_alerts"></span><i class="dot" id="nb-alerts" hidden></i></a>
       <a href="#/audit" data-route="audit"><svg class="ico"><use href="#i-log"/></svg><span data-i18n="nav_audit"></span></a>
@@ -84,8 +87,8 @@
     <button class="btn btn-ghost btn-sm" id="reset" type="button"><svg class="ico"><use href="#i-reset"/></svg><span data-i18n="reset"></span></button>
     <div class="lv-legend" id="legend" role="group" data-i18n-aria="lv_legend_title">
       <b data-i18n="lv_legend_title"></b>
-      <span class="lg"><span class="live-badge"><i></i>LIVE / حي</span><span data-i18n="lv_legend_live"></span></span>
-      <span class="lg"><span class="sim-tag" data-i18n="lv_sim_tag"></span><span data-i18n="lv_legend_sim"></span></span>
+      <span class="lv-lg"><span class="live-badge"><i></i>LIVE / حي</span><span data-i18n="lv_legend_live"></span></span>
+      <span class="lv-lg"><span class="sim-tag" data-i18n="lv_sim_tag"></span><span data-i18n="lv_legend_sim"></span></span>
     </div>
   </div>
 </header>
@@ -179,6 +182,28 @@
     <div id="roles-audit"></div>
   </section>
 
+  <!-- MAP (real tiles; pins are EXAMPLE / SIMULATION) -->
+  <section class="view" id="v-map" data-view="map" aria-labelledby="h-map" hidden>
+    <div class="vh"><h1 id="h-map" data-i18n="map_view_title"></h1><p class="lead" data-i18n="map_lead"></p></div>
+    <div class="mv-stage" id="mv-stage">
+      <div class="mv-map">
+        <div id="mv-canvas"></div>
+        <p id="mv-fail" class="mv-fail" role="status" hidden></p>
+        <button type="button" id="mv-layer" class="mv-layer"></button>
+        <div class="mv-dock" id="mv-dock">
+          <span class="mv-flag" data-i18n="map_flag">EXAMPLE</span>
+          <button type="button" class="m-chip" id="mv-chip-point" aria-pressed="false" aria-controls="mv-sheet"><span data-i18n="map_point_chip"></span></button>
+          <button type="button" class="m-chip" id="mv-chip-layer" aria-pressed="false"><span id="mv-chip-layer-t"></span></button>
+        </div>
+        <div class="mv-sheet" id="mv-sheet" hidden>
+          <div class="mv-sheet-h"><b id="mv-sheet-t"></b><button type="button" class="mv-x" id="mv-sheet-x" data-i18n-aria="m_close">×</button></div>
+          <div class="mv-sheet-b" id="mv-sheet-b"></div>
+        </div>
+      </div>
+      <div id="mv-detail" class="mv-detail"></div>
+    </div>
+  </section>
+
   <!-- ROADMAP -->
   <section class="view" id="v-roadmap" data-view="roadmap" aria-labelledby="h-rm" hidden>
     <div class="vh"><h1 id="h-rm" data-i18n="rm_title"></h1><p class="lead" data-i18n="rm_lead"></p></div>
@@ -221,9 +246,12 @@
 <script src="assets/js/i18n.js"></script>
 <script src="assets/js/i18n-live.js"></script>
 <script src="assets/js/i18n-geo.js"></script>
+<script src="assets/js/i18n-map.js"></script>
 <script src="assets/js/weather.js"></script>
 <script src="assets/js/geo.js"></script>
 <script src="assets/js/data.js"></script>
+<script src="assets/vendor/leaflet/leaflet.js"></script>
+<script src="assets/js/mapview.js"></script>
 <script src="assets/js/app.js"></script>
 </body>
 </html>
