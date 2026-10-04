@@ -54,7 +54,6 @@
 </header>
 
 <main id="view" class="view">
-  <div class="sim-badge" role="status"><i class="pulse-dot"></i><span data-i18n="badge" dir="auto">SIMULATION / عرض تجريبي - بيانات افتراضية</span></div>
   <div id="labels" class="labels" aria-hidden="true"></div>
   <div id="camtools" class="camtools" role="group" data-i18n-aria="cam_aria">
     <button type="button" data-cam="overview"><span data-i18n="cam_overview"></span></button>
@@ -68,11 +67,27 @@
       <div class="lb-legend"><span class="live-badge" title="" id="lb-live"><i></i>LIVE / حي</span><span class="lb-t" data-i18n="lv_legend_live_s"></span><span class="sim-tag" data-i18n="lv_sim_tag"></span><span class="lb-t" data-i18n="lv_legend_sim_s"></span></div>
       <div class="lb-chips" id="lb-chips"></div>
     </div>
-    <div class="geo-banner" role="note">
+    <div class="geo-banner" id="geo-banner" role="note">
       <p class="geo-note" data-i18n="geo_note"></p>
       <p class="geo-context" data-i18n="geo_context"></p>
     </div>
+    <div id="sat-readout" class="sat-readout">
+      <p class="sr-dish"></p>
+      <p class="sr-pt"></p>
+      <p class="sr-ku"></p>
+    </div>
     <div id="heat-legend" class="heat-legend" hidden><b data-i18n="heat_legend"></b><i></i><span><bdi class="ltr">30 °C</bdi><bdi class="ltr">70 °C</bdi></span></div>
+  </div>
+  <div class="m-dock" id="m-dock">
+    <div class="sim-badge" role="status"><i class="pulse-dot"></i><span data-i18n="badge" dir="auto">SIMULATION / عرض تجريبي - بيانات افتراضية</span></div>
+    <button type="button" class="m-chip" data-sheet="live" aria-pressed="false" aria-controls="m-sheet"><span data-i18n="m_live"></span></button>
+    <button type="button" class="m-chip" data-sheet="sat" aria-pressed="false" aria-controls="m-sheet"><span data-i18n="m_sat"></span></button>
+    <button type="button" class="m-chip" data-sheet="info" aria-pressed="false" aria-controls="m-sheet"><span data-i18n="m_info"></span></button>
+    <button type="button" class="m-chip" data-sheet="tasks" aria-pressed="false" aria-controls="m-sheet"><span data-i18n="m_tasks"></span></button>
+  </div>
+  <div class="m-sheet" id="m-sheet" hidden>
+    <div class="m-sheet-h"><b id="m-sheet-t"></b><button type="button" class="m-x" id="m-sheet-x" data-i18n-aria="m_close">×</button></div>
+    <div class="m-sheet-b" id="m-sheet-b"></div>
   </div>
   <div id="fallback" class="fallback" hidden>
     <p class="fb-msg" data-i18n="fb_msg"></p>

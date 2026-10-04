@@ -31,6 +31,7 @@
 .pt-grid > div { display: flex; flex-direction: column; border: 1px solid var(--line, rgba(255,255,255,.12)); border-radius: .7rem; padding: .4rem .6rem; background: rgba(255, 255, 255, .03); min-width: 0; }
 .pt-grid dt { font-size: .78rem; color: var(--ink-2, #c7c8da); } .pt-grid dd { margin: 0; font: 700 1.15rem var(--mono, ui-monospace, monospace); direction: ltr; text-align: start; }
 .pt-assets { margin: .35rem 0 .5rem; font-weight: 700; }
+.geo-chip { display: none; }
 .geo-banner { position: relative; z-index: 2; margin: 0; padding: .7rem 1.1rem .75rem; background: rgba(40, 24, 4, .92); border-bottom: 2px solid #fbbf24; }
 .geo-note { margin: 0; color: #fde68a; font-weight: 700; font-size: .95rem; line-height: 1.45; }
 .geo-context { margin: .35rem 0 0; color: #f3e7c4; font-size: .82rem; line-height: 1.45; }
@@ -38,3 +39,12 @@
 .wx-mini { display: flex; align-items: center; gap: .5em; flex-wrap: wrap; margin-block-start: .5em; font-size: .92em; }
 .wx-mini bdi { font-family: var(--mono, ui-monospace, monospace); font-weight: 700; }
 @media (max-width: 900px) { .wx-cards { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) {
+  body > .geo-banner { padding: 0; background: transparent; border: 0; }
+  body > .geo-banner.is-open { padding: .35rem .5rem .5rem; background: rgba(40, 24, 4, .92); border-bottom: 2px solid #fbbf24; }
+  body > .geo-banner .geo-chip { display: flex; align-items: center; gap: .45rem; width: 100%; margin: 0; padding: .28rem .55rem; border-radius: 999px; border: 1px solid #fbbf24; background: rgba(40, 24, 4, .92); color: #fde68a; font: inherit; font-weight: 700; font-size: .78rem; text-align: start; cursor: pointer; min-width: 0; }
+  body > .geo-banner .geo-chip-preview { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  body > .geo-banner:not(.is-open) .geo-full { display: none; }
+  body > .geo-banner.is-open .geo-chip-preview { display: none; }
+  body > .geo-banner.is-open .geo-full { max-height: 45vh; overflow: auto; margin-top: .35rem; }
+}
