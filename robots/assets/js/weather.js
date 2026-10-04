@@ -16,7 +16,8 @@
   var CURRENT = 'temperature_2m,relative_humidity_2m,cloud_cover,precipitation,wind_speed_10m,wind_gusts_10m,wind_direction_10m';
   var REFRESH_MS = 10 * 60 * 1000, STALE_MS = 30 * 60 * 1000, TIMEOUT_MS = 12000;
   var LS_THR = 'aicore-robots-wind-thr';
-  var DEFAULT_WIND_KMH = 40, GUST_MARGIN_KMH = 20;
+  var LS_RAIN = 'aicore-robots-rain-thr';
+  var DEFAULT_WIND_KMH = 40, GUST_MARGIN_KMH = 20, DEFAULT_RAIN_MM = 0.5;
 
   var st = { status: 'idle', fetchedAt: 0, data: {}, error: '', refreshMs: REFRESH_MS, timer: 0, listeners: [], inflight: null, count: 0 };
   function emit() { st.listeners.forEach(function (f) { try { f(); } catch (e) { /* ignore */ } }); }
@@ -80,6 +81,16 @@
     if (!v) return false;
     return (v.wind != null && v.wind >= thr) || (v.gust != null && v.gust >= thr + GUST_MARGIN_KMH);
   }
+  function rainThreshold() {
+    var v = NaN; try { v = parseFloat(localStorage.getItem(LS_RAIN)); } catch (e) { /* ignore */ }
+    return isFinite(v) && v >= 0 ? v : DEFAULT_RAIN_MM;
+  }
+  function setRainThreshold(v) { v = parseFloat(v); if (!(v >= 0)) return rainThreshold(); try { localStorage.setItem(LS_RAIN, String(v)); } catch (e) { /* ignore */ } emit(); return v; }
+  /* Advisory rule (demo rule of thumb, NOT a link budget): current precipitation >= thr (mm). C-band resists rain; Ku is more sensitive — the UI says so. */
+  function rainExceeded(v, thr) {
+    thr = thr == null ? rainThreshold() : thr;
+    return !!(v && v.rain != null && v.rain >= thr);
+  }
   function compass(deg) { if (deg == null) return ''; return ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(((deg % 360) + 360) % 360 / 45) % 8]; }
   function f0(x) { return x == null ? '—' : String(Math.round(x)); }
   function f1(x) { return x == null ? '—' : (Math.round(x * 10) / 10).toFixed(1); }
@@ -93,16 +104,16 @@
       return '<article class="wx-card wx-off" data-wx="' + id + '" data-live="0"><header><b>' + esc(name) + '</b><span class="na-badge">' + esc(g.status === 'loading' ? t('lv_wx_loading') : t('lv_wx_unavail')) + '</span></header>' +
         '<p class="tiny muted">' + esc(g.status === 'loading' ? t('lv_wx_src') : t('lv_wx_unavail_d')) + '</p></article>';
     }
-    var v = g.v, hi = windExceeded(v, thr);
+    var v = g.v, hi = windExceeded(v, thr), rainHi = rainExceeded(v, rainThreshold());
     function row(k, val, cls) { return '<div' + (cls ? ' class="' + cls + '"' : '') + '><dt>' + esc(t(k)) + '</dt><dd><bdi class="ltr">' + val + '</bdi></dd></div>'; }
     var windTxt = f0(v.wind) + ' km/h' + (v.dir != null ? ' · ' + compass(v.dir) + ' ' + f0(v.dir) + '°' : '');
-    return '<article class="wx-card' + (hi ? ' wx-hi' : '') + '" data-wx="' + id + '" data-live="1"><header><b>' + esc(name) + '</b>' + liveBadge(t) + '</header><dl class="wx-grid">' +
+    return '<article class="wx-card' + (hi || rainHi ? ' wx-hi' : '') + '" data-wx="' + id + '" data-live="1"><header><b>' + esc(name) + '</b>' + liveBadge(t) + '</header><dl class="wx-grid">' +
       row('lv_wx_temp', f1(v.temp) + ' °C') + row('lv_wx_wind', windTxt, hi ? 'hi' : '') + row('lv_wx_gust', f0(v.gust) + ' km/h', hi && v.gust != null && v.gust >= thr + GUST_MARGIN_KMH ? 'hi' : '') +
-      row('lv_wx_hum', f0(v.hum) + ' %') + row('lv_wx_cloud', f0(v.cloud) + ' %') + row('lv_wx_rain', f1(v.rain) + ' mm') + '</dl>' +
+      row('lv_wx_hum', f0(v.hum) + ' %') + row('lv_wx_cloud', f0(v.cloud) + ' %') + row('lv_wx_rain', f1(v.rain) + ' mm', rainHi ? 'hi' : '') + '</dl>' +
       '<p class="wx-foot tiny muted">' + esc(t('lv_wx_obs')) + ' <bdi class="ltr">' + esc(fmt.clock(g.obs)) + '</bdi> · ' + esc(g.stale ? t('lv_wx_stale', { m: g.ageMin }) : t('lv_wx_ago', { m: g.ageMin })) + '</p></article>';
   }
 
-  return { renderCard: renderCard, liveBadge: liveBadge, SITES: SITES, ENDPOINT: ENDPOINT, REFRESH_MS: REFRESH_MS, STALE_MS: STALE_MS, DEFAULT_WIND_KMH: DEFAULT_WIND_KMH, GUST_MARGIN_KMH: GUST_MARGIN_KMH,
+  return { renderCard: renderCard, liveBadge: liveBadge, SITES: SITES, ENDPOINT: ENDPOINT, REFRESH_MS: REFRESH_MS, STALE_MS: STALE_MS, DEFAULT_WIND_KMH: DEFAULT_WIND_KMH, GUST_MARGIN_KMH: GUST_MARGIN_KMH, DEFAULT_RAIN_MM: DEFAULT_RAIN_MM,
     start: start, fetchNow: fetchNow, get: get, onChange: onChange, buildUrl: buildUrl, parse: parse, windThreshold: windThreshold, setWindThreshold: setWindThreshold,
-    windExceeded: windExceeded, compass: compass, f0: f0, f1: f1, state: st };
+    windExceeded: windExceeded, rainThreshold: rainThreshold, setRainThreshold: setRainThreshold, rainExceeded: rainExceeded, compass: compass, f0: f0, f1: f1, state: st };
 });

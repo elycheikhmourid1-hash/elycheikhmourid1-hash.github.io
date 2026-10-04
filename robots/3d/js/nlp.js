@@ -23,7 +23,8 @@
     hot: ['hot', 'overheat', 'too hot', 'chaud', 'surchauff', 'brul', 'ساخن', 'سخون', 'ارتفاع', 'حار'],
     perimeter: ['patrol', 'perimeter', 'fence', 'gate', 'security', 'round', 'patrouille', 'ronde', 'perimetre', 'cloture', 'portail', 'securite',
       'دوري', 'محيط', 'سياج', 'بواب', 'جول', 'حراس'],
-    night: ['night', 'nocturn', 'after dark', 'nuit', 'ليل']
+    night: ['night', 'nocturn', 'after dark', 'nuit', 'ليل'],
+    rain: ['rain', 'fade', 'pluie', 'affaibl', 'مطر', 'خبو', 'توهين']
   };
   var CAB_WORD = ['cabinet', 'rack', 'armoire', 'baie', 'خزان', 'راك'];
 
@@ -60,11 +61,12 @@
   function parse(text) {
     var s = norm(text);
     if (s.length < 2) return { ok: false, text: text };
-    var d = has(s, LEX.dish), c = has(s, LEX.cabinet), p = has(s, LEX.perimeter), n = has(s, LEX.night);
+    var d = has(s, LEX.dish), c = has(s, LEX.cabinet), p = has(s, LEX.perimeter), n = has(s, LEX.night), rain = has(s, LEX.rain);
     var drift = has(s, LEX.drift), hot = has(s, LEX.hot), letter = cabinetLetter(s);
     var hasCabWord = has(s, CAB_WORD).length > 0;
     var kind = null;
     if (n.length) kind = 'night';
+    else if (rain.length && !hasCabWord) kind = 'rain';
     else {
       var sc = { dish: d.length, thermal: c.length + (letter ? 2 : 0), perimeter: p.length };
       if (hasCabWord) sc.thermal += 1;
@@ -75,6 +77,7 @@
     }
     if (!kind) return { ok: false, text: text };
     var flags = { drift: false, hot: false }, target = null, matched = [];
+    if (kind === 'rain') { flags.rain = true; matched = rain.concat(d); }
     if (kind === 'dish') { flags.drift = drift.length > 0; matched = d.concat(drift); }
     if (kind === 'thermal') {
       flags.hot = hot.length > 0; target = letter || (flags.hot ? 'B' : null);

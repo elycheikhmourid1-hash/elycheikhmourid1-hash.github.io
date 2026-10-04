@@ -14,8 +14,12 @@
 
   /* Nouakchott (city-centre coordinates, same as the weather query). Replace with surveyed site coordinates for real use. */
   var STATION = { id: 'nkc', lat: 18.0735, lon: -15.9582, h: 0 };
-  /* Generic orbital longitudes only (degrees east positive). No operator / satellite names on purpose. */
-  var SAT_LONS = [-30, -15, -5, 0, 5, 13, 20, 30.5, 39, 52];
+  /* Generic orbital longitudes (degrees east positive), plus 26°E.
+     26°E is the published slot of Arabsat Badr-8 and is offered only as a named example
+     for this geometry calculator (see SAT_EXAMPLES). It is not a live feed and not a link to any operator. */
+  var SAT_LONS = [-30, -15, -5, 0, 5, 13, 20, 26, 30.5, 39, 52];
+  var SAT_EXAMPLES = { 26: 'badr8' };
+  var SAT_EXAMPLE_LON = 26;
 
   function norm360(x) { x = x % 360; return x < 0 ? x + 360 : x; }
   function norm180(x) { x = norm360(x); return x > 180 ? x - 360 : x; }
@@ -73,6 +77,6 @@
   function lonLabel(lon) { var a = Math.abs(lon); return lon === 0 ? '0°' : (Number.isInteger(a) ? String(a) : a.toFixed(1)) + '°' + (lon > 0 ? 'E' : 'W'); }
   function compass(az) { var n = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']; return n[Math.round(norm360(az) / 22.5) % 16]; }
 
-  return { STATION: STATION, SAT_LONS: SAT_LONS, lookAngles: lookAngles, closedForm: closedForm, azDeviation: azDeviation, driftCheck: driftCheck,
+  return { STATION: STATION, SAT_LONS: SAT_LONS, SAT_EXAMPLES: SAT_EXAMPLES, SAT_EXAMPLE_LON: SAT_EXAMPLE_LON, lookAngles: lookAngles, closedForm: closedForm, azDeviation: azDeviation, driftCheck: driftCheck,
     DRIFT_LIMIT_DEG: DRIFT_LIMIT_DEG, lonLabel: lonLabel, compass: compass, norm360: norm360, norm180: norm180, R_GEO: R_GEO };
 });

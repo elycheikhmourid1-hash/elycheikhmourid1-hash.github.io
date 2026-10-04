@@ -49,7 +49,8 @@
     var a = e.args || {}, f = html ? function (x) { return ltr(x); } : function (x) { return x; };
     var vars = {
       id: f(a.id || ''), id2: f(a.id2 || ''), robot: f(a.robot || ''),
-      site: a.site ? t('site.' + a.site) : '', tpl: a.tpl ? t('tpl.' + a.tpl + '.name') : '', type: a.type ? t('al.' + a.type + '.title') : ''
+      site: a.site ? t('site.' + a.site) : '', tpl: a.tpl ? t('tpl.' + a.tpl + '.name') : '',
+      type: a.type ? t((a.site === 'gs' && (I[lang]['al.' + a.type + '.gs.title'] != null || I.ar['al.' + a.type + '.gs.title'] != null)) ? 'al.' + a.type + '.gs.title' : 'al.' + a.type + '.title') : ''
     };
     return t('a.' + e.action, vars);
   }
@@ -84,8 +85,34 @@
   function anyRobot(siteId) { return S.robots.filter(function (r) { return r.site === siteId; })[0]; }
 
   /* ---------- missions ---------- */
-  function genFindings(tpl, alertType) {
+  function genFindings(tpl, alertType, m) {
     var ok = function (k, v) { return { k: k, v: v, attn: false }; };
+    var wx = (m && m.wx) || {};
+    if (alertType === 'wind') {
+      return [{ k: 'f.wind', v: { s: (wx.wind != null ? wx.wind : '—') + ' km/h' }, attn: true },
+        { k: 'f.cband', v: { s: rnd(0.1, 0.4).toFixed(1) + '°' }, attn: false },
+        ok('f.mount', { k: 'v.tight' }), ok('f.cables', { k: 'v.intact' })];
+    }
+    if (alertType === 'rain' || tpl === 'rainfade') {
+      return [{ k: 'f.rain', v: { s: (wx.rain != null ? wx.rain : '—') + ' mm' }, attn: true },
+        { k: 'f.ku', v: { k: 'v.ku_sensitive' }, attn: true },
+        { k: 'f.cband', v: { k: 'v.cband_ok' }, attn: false }];
+    }
+    if (tpl === 'pointing' || alertType === 'pointing' || alertType === 'ku') {
+      var azBad = alertType === 'pointing' || alertType === 'dish';
+      return [{ k: 'f.cband', v: { s: (azBad ? rnd(1.4, 2.6) : rnd(0.1, 0.4)).toFixed(1) + '°' }, attn: azBad },
+        { k: 'f.ku', v: { k: alertType === 'ku' ? 'v.ku_check' : 'v.intact' }, attn: alertType === 'ku' },
+        ok('f.mount', { k: 'v.tight' }), ok('f.cables', { k: 'v.intact' })];
+    }
+    if (alertType === 'hpa') {
+      return [{ k: 'f.hpa', v: { s: Math.round(rnd(61, 67)) + ' °C' }, attn: true }, ok('f.cables', { k: 'v.intact' })];
+    }
+    if (alertType === 'idu') {
+      return [{ k: 'f.idu', v: { s: rnd(7.6, 9.8).toFixed(1) + ' dB' }, attn: true }, ok('f.ku', { k: 'v.intact' })];
+    }
+    if (alertType === 'ups') {
+      return [{ k: 'f.ups', v: { s: Math.round(rnd(188, 199)) + ' V' }, attn: true }, ok('f.cables', { k: 'v.intact' })];
+    }
     if (tpl === 'antenna') {
       var bad = alertType === 'dish';
       return [{ k: 'f.azimuth', v: { s: (bad ? rnd(1.4, 2.6) : rnd(0.1, 0.4)).toFixed(1) + '°' }, attn: bad }, ok('f.mount', { k: 'v.tight' }), ok('f.cables', { k: 'v.intact' })];
@@ -140,7 +167,7 @@
     toast(t('toast_rejected')); afterChange();
   }
   function completeMission(m) {
-    m.status = 'done'; m.tEnd = Date.now(); m.elapsed = m.total; m.findings = genFindings(m.tpl, m.alertType);
+    m.status = 'done'; m.tEnd = Date.now(); m.elapsed = m.total; m.findings = genFindings(m.tpl, m.alertType, m);
     var r = S.robots.filter(function (x) { return x.id === m.robot; })[0];
     if (r) r.state = r.batt < 30 ? 'returning' : 'patrol';
     addLog('robot:' + m.robot, 'complete', { id: m.id }, m.tEnd);
@@ -153,7 +180,7 @@
     var at = D.alertTypes.filter(function (a) { return a.id === typeId; })[0];
     if (!siteId) { var c = at.sites; siteId = c[Math.floor(Math.random() * c.length)]; }
     var r = pickRobot(siteId) || anyRobot(siteId);
-    var v = typeId === 'overheat' ? Math.round(rnd(58, 67)) : typeId === 'door' ? Math.round(rnd(4, 12)) : typeId === 'dish' ? rnd(1.4, 2.6).toFixed(1) : '';
+    var v = typeId === 'overheat' || typeId === 'hpa' ? Math.round(rnd(58, 67)) : typeId === 'door' ? Math.round(rnd(4, 12)) : (typeId === 'dish' || typeId === 'pointing') ? rnd(1.4, 2.6).toFixed(1) : typeId === 'idu' ? rnd(7.6, 9.8).toFixed(1) : typeId === 'ups' ? Math.round(rnd(188, 199)) : '';
     var a = { id: 'A-' + (S.nextA++), type: typeId, site: siteId, sev: at.sev, ts: ts || Date.now(), v: v, robot: r.id, tpl: at.tpl, status: 'open', missionId: null, by: null, tDecided: null };
     S.alerts.unshift(a);
     addLog('system', 'alert', { id: a.id, type: typeId, site: siteId }, a.ts);
@@ -163,8 +190,10 @@
   }
   function approveAlert(id) {
     var a = S.alerts.filter(function (x) { return x.id === id; })[0]; if (!a || a.status !== 'open') return;
-    var m = mkMission(a.tpl, a.site, 'alert', a.id, a.type, a.robot);
-    if (!startMission(m, 'op:' + S.op)) { S.missions.shift(); S.nextM--; return; }
+    var m = a.missionId && S.missions.filter(function (x) { return x.id === a.missionId; })[0];
+    var created = false;
+    if (!m || m.status !== 'awaiting') { m = mkMission(a.tpl, a.site, 'alert', a.id, a.type, a.robot); created = true; }
+    if (!startMission(m, 'op:' + S.op)) { if (created) { S.missions.shift(); S.nextM--; } return; }
     S.log.shift(); // drop robot 'start' so the human decision is logged first
     a.status = 'dispatched'; a.missionId = m.id; a.by = 'op:' + S.op; a.tDecided = Date.now();
     addLog(a.by, 'dispatch', { id: a.id, robot: m.robot, id2: m.id }, a.tDecided);
@@ -174,16 +203,24 @@
   function dismissAlert(id) {
     var a = S.alerts.filter(function (x) { return x.id === id; })[0]; if (!a || a.status !== 'open') return;
     a.status = 'dismissed'; a.by = 'op:' + S.op; a.tDecided = Date.now();
+    if (a.missionId) {
+      var m = S.missions.filter(function (x) { return x.id === a.missionId; })[0];
+      if (m && m.status === 'awaiting') { m.status = 'rejected'; m.tDecided = a.tDecided; m.by = a.by; addLog(a.by, 'reject', { id: m.id, tpl: m.tpl, site: m.site }, a.tDecided); }
+    }
     addLog(a.by, 'dismiss', { id: a.id }, a.tDecided); toast(t('toast_dismissed')); afterChange();
   }
 
-  /* ---------- LIVE wind alerts (real Open-Meteo wind -> advisory -> drafted dish wind-load check, pending approval) ---------- */
-  function raiseLiveWind(siteId, v, thr) {
+  /* ---------- LIVE weather advisories (Open-Meteo -> drafted task that stays awaiting human approval) ---------- */
+  function raiseLiveAdvisory(type, siteId, fields) {
     var r = pickRobot(siteId) || anyRobot(siteId); if (!r) return null;
-    var a = { id: 'A-' + (S.nextA++), type: 'wind', site: siteId, sev: 'medium', ts: Date.now(), v: String(Math.round(Math.max(v.wind || 0, 0))), thr: String(thr), robot: r.id, tpl: 'antenna', status: 'open', missionId: null, by: null, tDecided: null, live: true };
+    var tpl = type === 'rain' ? 'rainfade' : (siteId === 'gs' ? 'pointing' : 'antenna');
+    var a = { id: 'A-' + (S.nextA++), type: type, site: siteId, sev: 'medium', ts: Date.now(), v: fields.v, thr: String(fields.thr), robot: r.id, tpl: tpl, status: 'open', missionId: null, by: null, tDecided: null, live: true, wx: fields.wx };
     S.alerts.unshift(a);
-    addLog('system', 'alert', { id: a.id, type: 'wind', site: siteId }, a.ts);
-    addLog('system', 'draft', { id: a.id, tpl: 'antenna', robot: r.id }, a.ts);
+    addLog('system', 'alert', { id: a.id, type: type, site: siteId }, a.ts);
+    var m = mkMission(tpl, siteId, 'alert', a.id, type, r.id);
+    m.live = true; m.wx = fields.wx; a.missionId = m.id;
+    addLog('system', 'propose', { id: m.id, tpl: tpl, site: siteId, robot: r.id }, m.tProposed);
+    addLog('system', 'draft', { id: a.id, tpl: tpl, robot: r.id }, a.ts);
     toast(t('toast_alert')); return a;
   }
   function checkWind() {
@@ -193,11 +230,27 @@
       var g = WX.get(WX_OF[sid]); S.windArm = S.windArm || {};
       if (!g.ok) return;
       var hot = WX.windExceeded(g.v, thr);
-      if (hot && !S.windArm[sid]) { S.windArm[sid] = true; raiseLiveWind(sid, g.v, thr); changed = true; }
-      else if (!hot) S.windArm[sid] = false;
+      if (hot && !S.windArm[sid]) {
+        S.windArm[sid] = true;
+        raiseLiveAdvisory('wind', sid, { v: String(Math.round(Math.max(g.v.wind || 0, 0))), thr: thr, wx: { wind: WX.f0(g.v.wind), gust: g.v.gust == null ? '—' : WX.f0(g.v.gust), rain: WX.f1(g.v.rain), thr: thr } });
+        changed = true;
+      } else if (!hot) S.windArm[sid] = false;
     });
     if (changed) afterChange();
   }
+  /* Rain-fade advisory only for the illustrative GEO scenario (Nouakchott). Stays a pending mission — the robot does not move. */
+  function checkRain() {
+    if (!S) return;
+    var thr = WX.rainThreshold(), g = WX.get('nkc'); S.rainArm = S.rainArm || {};
+    if (!g.ok) return;
+    var hot = WX.rainExceeded(g.v, thr);
+    if (hot && !S.rainArm.gs) {
+      S.rainArm.gs = true;
+      raiseLiveAdvisory('rain', 'gs', { v: WX.f1(g.v.rain), thr: thr, wx: { rain: WX.f1(g.v.rain), wind: WX.f0(g.v.wind), gust: g.v.gust == null ? '—' : WX.f0(g.v.gust), thr: thr } });
+      afterChange();
+    } else if (!hot) S.rainArm.gs = false;
+  }
+  function checkAdvisories() { checkWind(); checkRain(); }
 
   /* ---------- LIVE weather rendering ---------- */
   function renderWeather() {
@@ -205,7 +258,46 @@
     var fmt = { clock: fClock };
     host.innerHTML = WX.SITES.map(function (s) { return WX.renderCard(s.id, t, esc, fmt); }).join('');
     var thr = $('#wx-thr'); if (thr && document.activeElement !== thr) thr.value = WX.windThreshold();
+    var rth = $('#wx-rain'); if (rth && document.activeElement !== rth) rth.value = WX.rainThreshold();
     renderPlanWx();
+    renderAdvisoryStatus();
+  }
+  /* LIVE-computed look angles for the illustrative GEO site. Same calculator as the 3D page (assets/js/geo.js). */
+  var LS_SAT = 'aicore-robots-sat';
+  function currentSatLon() {
+    var v = NaN;
+    try { v = parseFloat(localStorage.getItem(LS_SAT)); } catch (e) { /* ignore */ }
+    return GEO.SAT_LONS.indexOf(v) >= 0 ? v : GEO.SAT_EXAMPLE_LON;
+  }
+  function satLabel(l) { return GEO.lonLabel(l) + (GEO.SAT_EXAMPLES[l] === 'badr8' ? ' — ' + t('name_badr') : ''); }
+  function renderPointing() {
+    var sel = $('#sat-sel'); if (!sel || !window.GEO) return;
+    var lon = currentSatLon();
+    if (!sel.options.length || sel.getAttribute('data-lang') !== lang) {
+      sel.innerHTML = GEO.SAT_LONS.slice().sort(function (a, b) { return a - b; }).map(function (l) {
+        return '<option value="' + l + '">' + esc(satLabel(l)) + '</option>';
+      }).join('');
+      sel.setAttribute('data-lang', lang);
+    }
+    sel.value = String(lon);
+    var p = GEO.lookAngles(GEO.STATION.lat, GEO.STATION.lon, lon);
+    var host = $('#pt-out'); if (!host) return;
+    host.innerHTML = p.visible
+      ? '<div><dt>' + esc(t('lv_pt_az')) + '</dt><dd>' + ltr(WX.f1(p.az) + '°') + '</dd></div>' +
+        '<div><dt>' + esc(t('lv_pt_el')) + '</dt><dd>' + ltr(WX.f1(p.el) + '°') + '</dd></div>' +
+        '<div><dt>' + esc(t('lv_pt_skew')) + '</dt><dd>' + ltr((p.skew > 0 ? '+' : '') + WX.f1(p.skew) + '°') + '</dd></div>' +
+        '<div><dt>' + esc(t('lv_pt_range')) + '</dt><dd>' + ltr(Math.round(p.range).toLocaleString('en-US') + ' km') + '</dd></div>'
+      : '<div><dd>' + esc(t('lv_pt_below')) + '</dd></div>';
+  }
+  function renderAdvisoryStatus() {
+    var el = $('#wx-adv'); if (!el) return;
+    var g = WX.get('nkc');
+    if (!g.ok) { el.textContent = ''; return; }
+    var parts = [];
+    if (WX.rainExceeded(g.v, WX.rainThreshold())) parts.push(t('lv_rain_hot'));
+    else parts.push(t('lv_rain_ok', { v: WX.f1(g.v.rain), thr: String(WX.rainThreshold()) }));
+    if (WX.windExceeded(g.v, WX.windThreshold())) parts.push(t('lv_wind_hot'));
+    el.textContent = parts.join(' ');
   }
   function renderPlanWx() {
     var host = $('#plan-wx'); if (!host || !S) return;
@@ -350,9 +442,16 @@
     svg.setAttribute('aria-label', t('plan_aria') + ' — ' + t('site.' + S.sel));
     var h = '<rect class="p-bg" x="0" y="0" width="400" height="260"/>' + pl.shapes + '<path class="p-route" d="' + pl.route + '"/>';
     pl.pois.forEach(function (p) {
-      var key = 'poi.' + p[2], lab = t(key), warn = (p[2] === 'cabinet' && S.alerts.some(function (a) { return a.site === S.sel && a.status === 'open' && a.type === 'overheat'; })) ||
-        (p[2] === 'dish' && S.alerts.some(function (a) { return a.site === S.sel && a.status === 'open' && a.type === 'dish'; })) ||
-        (p[2] === 'gate' && S.alerts.some(function (a) { return a.site === S.sel && a.status === 'open' && (a.type === 'intruder' || a.type === 'door'); }));
+      var key = 'poi.' + p[2], lab = t(key);
+      var openType = function (types) { return S.alerts.some(function (a) { return a.site === S.sel && a.status === 'open' && types.indexOf(a.type) >= 0; }); };
+      var warn = (p[2] === 'cabinet' && openType(['overheat'])) ||
+        (p[2] === 'dish' && openType(['dish'])) ||
+        (p[2] === 'geo_c' && openType(['dish', 'pointing', 'wind'])) ||
+        (p[2] === 'ku' && openType(['ku', 'rain'])) ||
+        (p[2] === 'hpa' && openType(['hpa', 'overheat'])) ||
+        (p[2] === 'idu' && openType(['idu'])) ||
+        (p[2] === 'ups' && openType(['ups'])) ||
+        (p[2] === 'gate' && openType(['intruder', 'door']));
       var ly = p[1] > 215 ? p[1] - 9 : p[1] + 15;
       h += '<g class="poi' + (p[2] === 'dock' ? ' dock' : '') + (warn ? ' warn' : '') + '"><circle class="poi-r" cx="' + p[0] + '" cy="' + p[1] + '" r="9"/><circle cx="' + p[0] + '" cy="' + p[1] + '" r="4"/>' +
         '<text x="' + p[0] + '" y="' + ly + '" text-anchor="middle">' + esc(lab) + '</text></g>';
@@ -427,7 +526,8 @@
   }
   function missionCard(m) {
     var h = '<article class="card mcard m-' + m.status + '" data-m="' + m.id + '"><header><b>' + esc(t('tpl.' + m.tpl + '.name')) + '</b>' + ltr(m.id) + '</header>' +
-      '<p class="small muted">' + esc(t('site.' + m.site)) + ' · ' + esc(t('robot')) + ' ' + ltr(m.robot) + ' · ' + esc(t(m.src === 'alert' ? 'src_alert' : 'src_manual')) + '</p>';
+      '<p class="small muted">' + esc(t('site.' + m.site)) + ' · ' + esc(t('robot')) + ' ' + ltr(m.robot) + ' · ' + esc(t(m.src === 'alert' ? 'src_alert' : 'src_manual')) + '</p>' +
+      (m.live && m.status === 'awaiting' ? '<p class="tiny"><span class="live-badge"><i></i>LIVE / حي</span> ' + esc(t('lv_pending_live')) + '</p>' : '');
     if (m.status === 'awaiting') {
       h += stepsHTML(m) + '<p class="hint tiny">' + esc(t('hint_awaiting')) + '</p><div class="acts"><button class="btn btn-primary" type="button" data-approve="' + m.id + '"><svg class="ico"><use href="#i-check"/></svg>' + esc(t('approve')) + '</button>' +
         '<button class="btn btn-ghost" type="button" data-reject="' + m.id + '"><svg class="ico"><use href="#i-x"/></svg>' + esc(t('reject')) + '</button></div>';
@@ -464,10 +564,12 @@
   /* ---------- alerts view ---------- */
   function alertCard(a) {
     var open = a.status === 'open', robot = a.robot;
-    var h = '<article class="card alert sev-' + a.sev + (open ? '' : ' closed') + (a.live ? ' is-live' : '') + '" data-a="' + a.id + '"><header>' + (a.live ? '<span class="live-badge"><i></i>LIVE / حي</span>' : '<span class="sim-tag">' + esc(t('lv_sim_tag')) + '</span>') + '<span class="chip sev">' + esc(t('sev.' + a.sev)) + '</span><b>' + esc(t('al.' + a.type + '.title')) + '</b>' +
+    var alPrefix = (a.site === 'gs' && (I[lang]['al.' + a.type + '.gs.title'] != null || I.ar['al.' + a.type + '.gs.title'] != null)) ? 'al.' + a.type + '.gs.' : 'al.' + a.type + '.';
+    var alVars = { v: a.v, thr: a.thr || '', site: t('lv_wx_site_' + (WX_OF[a.site] || 'nkc')), robot: robot };
+    var h = '<article class="card alert sev-' + a.sev + (open ? '' : ' closed') + (a.live ? ' is-live' : '') + '" data-a="' + a.id + '"><header>' + (a.live ? '<span class="live-badge"><i></i>LIVE / حي</span>' : '<span class="sim-tag">' + esc(t('lv_sim_tag')) + '</span>') + '<span class="chip sev">' + esc(t('sev.' + a.sev)) + '</span><b>' + esc(t(alPrefix + 'title')) + '</b>' +
       '<span class="tiny muted">' + esc(t('site.' + a.site)) + ' · ' + ltr(fClock(a.ts)) + ' · ' + ltr(a.id) + '</span></header>' +
-      '<p class="small">' + esc(t('al.' + a.type + '.detail', { v: a.v, thr: a.thr || '', site: t('lv_wx_site_' + (WX_OF[a.site] || 'nkc')) })) + '</p>' +
-      '<div class="draft"><h4><svg class="ico"><use href="#i-bolt"/></svg>' + esc(t('al_draft')) + '</h4><p>' + esc(t('al.' + a.type + '.draft', { robot: robot })) + '</p>';
+      '<p class="small">' + esc(t(alPrefix + 'detail', alVars)) + '</p>' +
+      '<div class="draft"><h4><svg class="ico"><use href="#i-bolt"/></svg>' + esc(t('al_draft')) + '</h4><p>' + esc(t(alPrefix + 'draft', alVars)) + '</p>';
     if (open) h += '<p class="tiny muted">' + esc(t('al_draft_note')) + '</p><div class="acts"><button class="btn btn-primary" type="button" data-aa="' + a.id + '"><svg class="ico"><use href="#i-check"/></svg>' + esc(t('al_approve')) + '</button>' +
       '<button class="btn btn-ghost" type="button" data-ad="' + a.id + '">' + esc(t('al_dismiss')) + '</button></div>';
     else h += '<p class="tiny ' + (a.status === 'dispatched' ? 'ok-t' : 'muted') + '">' + esc(t(a.status === 'dispatched' ? 'al_st_dispatched' : 'al_st_dismissed')) + ' — ' + esc(actorText(a.by)) + ' · ' + ltr(fClock(a.tDecided)) + (a.missionId ? ' · ' + ltr(a.missionId) : '') + '</p>';
@@ -523,7 +625,8 @@
       '<tr><th scope="row">' + esc(t('rp_approved')) + '</th><td>' + esc(actorText(m.by)) + ' · ' + ltr(fDT(m.tDecided)) + '</td></tr>' +
       '<tr><th scope="row">' + esc(t('rp_started')) + '</th><td>' + ltr(fDT(m.tStart)) + '</td></tr>' +
       '<tr><th scope="row">' + esc(t('rp_completed')) + '</th><td>' + ltr(fDT(m.tEnd)) + '</td></tr></tbody></table>' +
-      '<p class="rp-disc">' + esc(t('rp_disclaimer')) + '<br>' + esc(t('rp_clock', { tz: tzAbbr(m.tEnd) + (tzName() ? ' (' + tzName() + ')' : '') })) + '</p><p class="rp-foot">AICore Digital LLC · Richmond, VA · aicoredigital.com · +1 804 485 3384</p>';
+      (m.site === 'gs' ? '<h2>' + esc(t('dp_assets')) + '</h2><ul>' + ['name_dish', 'name_ku', 'name_hpa', 'name_idu', 'name_ups', 'name_badr'].map(function (k) { return '<li>' + esc(t(k)) + (k === 'name_badr' ? ' — ' + esc(t('dp_badr_note')) : '') + '</li>'; }).join('') + '</ul>' : '') +
+      '<p class="rp-disc">' + esc(t('geo_note')) + '<br>' + esc(t('rp_disclaimer')) + '<br>' + esc(t('rp_clock', { tz: tzAbbr(m.tEnd) + (tzName() ? ' (' + tzName() + ')' : '') })) + '</p><p class="rp-foot">AICore Digital LLC · Richmond, VA · aicoredigital.com · +1 804 485 3384</p>';
   }
   function openReport(id, opener) {
     var m = S.missions.filter(function (x) { return x.id === id; })[0]; if (!m || m.status !== 'done') return;
@@ -579,7 +682,7 @@
   function renderAll() {
     applyStatic(); buildMap(); renderSiteTabs(); renderPlanHead(); renderPlan(); renderRobotList(); renderKpis();
     $('#roles-dash').innerHTML = rolesHTML(); $('#roles-audit').innerHTML = rolesHTML();
-    renderTemplates(); renderBoard(); renderAlerts(); renderAudit(); renderRoadmap(); renderNavDots(); renderWeather();
+    renderTemplates(); renderBoard(); renderAlerts(); renderAudit(); renderRoadmap(); renderNavDots(); renderWeather(); renderPointing();
     if (openRid) { var m = S.missions.filter(function (x) { return x.id === openRid; })[0]; if (m) $('#paper').innerHTML = reportBody(m); }
   }
   function setLang(l) {
@@ -588,7 +691,7 @@
   }
 
   /* ---------- init ---------- */
-  function resetDemo() { S = freshState(); seed(); renderAll(); route(); toast(t('toast_reset')); checkWind(); }
+  function resetDemo() { S = freshState(); seed(); renderAll(); route(); toast(t('toast_reset')); checkAdvisories(); }
   function init() {
     var q = /[?&]lang=(ar|fr|en)/.exec(location.search), saved = null;
     try { saved = localStorage.getItem('aicore-robots-lang'); } catch (e) {}
@@ -598,7 +701,14 @@
     $('#op').addEventListener('change', function (e) { S.op = e.target.value; toast(t('lv_op_set', { n: opName(S.op, true) })); });
     $('#wx-refresh').addEventListener('click', function () { toast(t('lv_wx_refreshing')); WX.fetchNow().then(function () { toast(WX.get('nkc').ok ? t('lv_wx_refreshed') : t('lv_wx_unavail')); }); });
     $('#wx-thr').addEventListener('change', function (e) { WX.setWindThreshold(e.target.value); toast(t('lv_saved')); e.target.value = WX.windThreshold(); checkWind(); renderWeather(); });
-    WX.onChange(function () { renderWeather(); checkWind(); });
+    $('#wx-rain').addEventListener('change', function (e) { WX.setRainThreshold(e.target.value); toast(t('lv_saved')); e.target.value = WX.rainThreshold(); checkRain(); renderWeather(); });
+    $('#sat-sel').addEventListener('change', function (e) {
+      var v = parseFloat(e.target.value);
+      if (GEO.SAT_LONS.indexOf(v) < 0) return;
+      try { localStorage.setItem(LS_SAT, String(v)); } catch (err) { /* ignore */ }
+      renderPointing();
+    });
+    WX.onChange(function () { renderWeather(); checkAdvisories(); });
     setInterval(renderWeather, 30000);
     var q2 = /[?&]wxms=(\d+)/.exec(location.search); WX.start(q2 ? { refreshMs: +q2[1] } : {});
     $('#reset').addEventListener('click', resetDemo);

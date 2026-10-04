@@ -90,6 +90,11 @@
   </div>
 </header>
 
+<div class="geo-banner" role="note">
+  <p class="geo-note" data-i18n="geo_note"></p>
+  <p class="geo-context" data-i18n="geo_context"></p>
+</div>
+
 <main id="main" tabindex="-1">
   <!-- DASHBOARD -->
   <section class="view" id="v-dashboard" data-view="dashboard" aria-labelledby="h-dash">
@@ -101,12 +106,25 @@
         <h2 id="wx-h"><span data-i18n="lv_wx_title"></span> <span class="live-badge"><i></i>LIVE / حي</span></h2>
         <div class="wx-tools">
           <label><span data-i18n="lv_wx_thr"></span><input type="number" id="wx-thr" min="5" max="150" step="1" inputmode="numeric"></label>
+          <label><span data-i18n="lv_wx_rain_thr"></span><input type="number" id="wx-rain" min="0" max="50" step="0.1" inputmode="decimal"></label>
           <button class="btn btn-ghost btn-sm" id="wx-refresh" type="button"><svg class="ico"><use href="#i-reset"/></svg><span data-i18n="lv_wx_refresh"></span></button>
         </div>
       </div>
       <div class="wx-cards" id="wx-cards"></div>
       <p class="tiny muted wx-note" data-i18n="lv_wx_src"></p>
       <p class="tiny muted wx-note" data-i18n="lv_wx_thr_note"></p>
+      <p class="tiny muted wx-note" data-i18n="lv_wx_rain_note"></p>
+      <p class="tiny wx-note" id="wx-adv" role="status"></p>
+    </section>
+    <section class="card wx-sec" id="pt-sec" aria-labelledby="pt-h">
+      <h2 id="pt-h"><span data-i18n="lv_pt_title"></span> <span class="live-badge"><i></i>LIVE / حي</span></h2>
+      <p class="tiny muted" data-i18n="lv_pt_note"></p>
+      <p class="tiny pt-assets"><span data-i18n="name_dish"></span> · <span data-i18n="name_ku"></span> · <span data-i18n="name_hpa"></span> · <span data-i18n="name_idu"></span> · <span data-i18n="name_ups"></span></p>
+      <label class="fld"><span class="tiny" data-i18n="lv_pt_sat"></span><select id="sat-sel"></select></label>
+      <dl class="pt-grid" id="pt-out"></dl>
+      <p class="tiny muted" data-i18n="lv_pt_generic"></p>
+      <p class="tiny muted" data-i18n="lv_pt_station"></p>
+      <p class="tiny muted" data-i18n="lv_pt_skew_note"></p>
     </section>
     <div class="dash-grid">
       <div class="card map-card">
@@ -199,7 +217,9 @@
 
 <script src="assets/js/i18n.js"></script>
 <script src="assets/js/i18n-live.js"></script>
+<script src="assets/js/i18n-geo.js"></script>
 <script src="assets/js/weather.js"></script>
+<script src="assets/js/geo.js"></script>
 <script src="assets/js/data.js"></script>
 <script src="assets/js/app.js"></script>
 </body>

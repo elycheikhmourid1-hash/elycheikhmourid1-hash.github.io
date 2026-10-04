@@ -69,18 +69,24 @@ function newMission(o) {
   m.robot = preferredRobot(m.kind); m.token = mkToken(m);
   S.missions.unshift(m); return m;
 }
+const CAB_ROLE = { A: 'name_idu', B: 'name_hpa', C: 'name_ups' };
+const cabRole = (c, L) => t(CAB_ROLE[c] || 'name_idu', null, L);
+const cabAsset = (c, L) => c ? t('asset_cab', { c, role: cabRole(c, L) }, L) : t('asset_cabs', null, L);
+const dishLike = k => k === 'dish' || k === 'rain';
 function threatOf(m) {
   if (m.sev) return m.sev;
+  if (m.kind === 'rain') return 'medium';
   if (m.kind === 'dish') return m.flags.drift ? 'medium' : 'low';
   if (m.kind === 'thermal') return m.flags.hot ? 'high' : (m.target === 'B' ? 'medium' : 'low');
   return m.kind === 'night' ? 'medium' : 'low';
 }
 function plan(m, L) {
   const c = m.target || '';
-  const asset = m.kind === 'dish' ? t('asset_dish', null, L) : m.kind === 'thermal' ? (m.target ? t('asset_cab', { c }, L) : t('asset_cabs', null, L)) : m.kind === 'perimeter' ? t('asset_fence', null, L) : t('asset_fence_night', null, L);
-  const an = m.kind === 'dish' ? (m.flags.wind ? 'an_dish_wind' : m.flags.drift ? 'an_dish_drift' : 'an_dish') : m.kind === 'thermal' ? (m.ctx && m.ctx.temp != null ? 'an_thermal_sensor' : m.flags.hot ? 'an_thermal_hot' : m.target ? 'an_thermal_cab' : 'an_thermal') : m.kind === 'perimeter' ? 'an_perimeter' : (m.flags.cam ? 'an_night_cam' : 'an_night');
-  const payload = { dish: ['zoom'], thermal: ['thermal', 'ultra'], perimeter: ['zoom', 'ultra'], night: ['thermal', 'zoom'] }[m.kind];
-  return { threat: threatOf(m), asset, analysis: t(an, { c, v: m.ctx && m.ctx.temp != null ? f1(m.ctx.temp) : '', w: m.ctx && m.ctx.w != null ? m.ctx.w : '' }, L), path: t('path_' + m.kind, { c: c || 'A–C', r: m.robot }, L), payload: payload.map(p => t('pl_' + p, null, L)).join(' + ') };
+  const asset = m.kind === 'rain' ? t('asset_ku', null, L) : m.kind === 'dish' ? t('asset_dish', null, L) : m.kind === 'thermal' ? (m.target ? cabAsset(c, L) : t('asset_cabs', null, L)) : m.kind === 'perimeter' ? t('asset_fence', null, L) : t('asset_fence_night', null, L);
+  const an = m.kind === 'rain' ? 'an_rain' : m.kind === 'dish' ? (m.flags.wind ? 'an_dish_wind' : m.flags.drift ? 'an_dish_drift' : 'an_dish') : m.kind === 'thermal' ? (m.ctx && m.ctx.temp != null ? 'an_thermal_sensor' : m.flags.hot ? 'an_thermal_hot' : m.target ? 'an_thermal_cab' : 'an_thermal') : m.kind === 'perimeter' ? 'an_perimeter' : (m.flags.cam ? 'an_night_cam' : 'an_night');
+  const payload = { dish: ['zoom'], rain: ['zoom'], thermal: ['thermal', 'ultra'], perimeter: ['zoom', 'ultra'], night: ['thermal', 'zoom'] }[m.kind];
+  const pathKey = dishLike(m.kind) ? 'dish' : m.kind;
+  return { threat: threatOf(m), asset, analysis: t(an, { c, v: m.ctx && m.ctx.temp != null ? f1(m.ctx.temp) : '', w: m.ctx && m.ctx.w != null ? m.ctx.w : '' }, L), path: t('path_' + pathKey, { c: c || 'A–C', r: m.robot }, L), payload: payload.map(p => t('pl_' + p, null, L)).join(' + ') };
 }
 function auditTrail(m, L) {
   const out = [m.status === 'awaiting' ? t('audit_draft_pending', { tok: m.token }, L) : t('audit_draft_done', { tok: m.token }, L)];
@@ -133,7 +139,7 @@ function reject(id) {
 function makeReadings(m) {
   const r = rngFor(m.num * 7919 + 13), ok = (k, v) => ({ k, v, attn: false });
   const f = [];
-  if (m.kind === 'dish') {
+  if (dishLike(m.kind)) {
     /* the look angles come from the real geometry (assets/js/geo.js); the robot's "measurement" error is simulated unless the operator entered a real measured azimuth */
     const pt = LV ? LV.pointing() : null, ctx = m.ctx || {};
     const baseAz = pt ? pt.az : between(r, 178, 186), baseEl = pt ? pt.el : between(r, 40.5, 43.5);
@@ -143,6 +149,11 @@ function makeReadings(m) {
     m.az = { az: az.toFixed(1), el: baseEl.toFixed(1), err: err.toFixed(1), ref: baseAz.toFixed(1) };
     f.push({ k: 'f_azerr', v: m.az.err + '°', attn: err > 0.5 }, ok('f_azimuth', m.az.az + '°'), ok('f_elev', m.az.el + '°'));
     if (m.flags.wind) f.push({ k: 'f_windload', v: (ctx.w != null ? ctx.w + ' km/h' : '—') + (ctx.g != null && ctx.g !== '—' ? ' / ' + ctx.g + ' km/h' : ''), attn: false, live: true });
+    if (m.kind === 'rain' || m.flags.rain) {
+      if (ctx.rain != null) f.push({ k: 'f_rain', v: ctx.rain + ' mm', attn: true, live: true });
+      f.push({ k: 'f_ku', v: 'v_ku_sensitive', attn: true, simNote: true });
+      f.push({ k: 'f_cband', v: 'v_cband_ok', attn: false, simNote: true });
+    }
     f.push(ok('f_mount', 'v_tight'), ok('f_cables', 'v_intact'));
   } else if (m.kind === 'thermal') {
     const tm = { A: Math.round(between(r, 38, 44)), B: Math.round(m.flags.hot ? between(r, 61, 67) : between(r, 46, 52)), C: Math.round(between(r, 37, 45)) };
@@ -164,7 +175,7 @@ const CABX = { A: -8, B: -5.5, C: -3 };
 function routeFor(m) {
   const rid = m.robot, d = LAYOUT.docks[rid], dock = { x: d.x, z: d.z }, Y = LAYOUT.dockYaw;
   const rev = a => a.slice().reverse().concat([dock]);
-  if (m.kind === 'dish') {
+  if (dishLike(m.kind)) {
     const out = [{ x: -8.6, z: 1.8 }, { x: -3, z: 1.2 }, { x: 3.7, z: -0.9 }], face = Math.atan2(2.1, 3.3);
     return [{ t: 'walk', pts: out, face, cap: 'cap_to_dish', st: 'walking' }, { t: 'pause', secs: 5.5, fx: 'dish', cap: 'cap_az' }, { t: 'walk', pts: rev(out.slice(0, -1)), face: Y, cap: 'cap_return', st: 'returning' }];
   }
@@ -256,25 +267,27 @@ function complete(m) {
 
 /* ---------- alerts (SIMULATED, generic device names, not real logs) ---------- */
 const ALERT_DEFS = {
-  snr: { device: 'MODEM-SIM-01', kind: 'dish', sev: 'medium', flags: { drift: false, hot: false } },
-  track: { device: 'ACU-SIM-01', kind: 'dish', sev: 'medium', flags: { drift: true, hot: false } },
-  pa: { device: 'BUC-SIM-A', kind: 'thermal', target: 'B', sev: 'high', flags: { drift: false, hot: true } },
-  pdu: { device: 'PDU-SIM-02', kind: 'thermal', target: 'C', sev: 'high', flags: { drift: false, hot: false } }
+  snr: { device: 'MODEM-SIM-01', kind: 'dish', sev: 'medium', flags: { drift: false, hot: false }, assetKey: 'name_idu' },
+  track: { device: 'ACU-SIM-01', kind: 'dish', sev: 'medium', flags: { drift: true, hot: false }, assetKey: 'name_dish' },
+  pa: { device: 'BUC-SIM-A', kind: 'thermal', target: 'B', sev: 'high', flags: { drift: false, hot: true }, assetKey: 'name_hpa' },
+  pdu: { device: 'PDU-SIM-02', kind: 'thermal', target: 'C', sev: 'high', flags: { drift: false, hot: false }, assetKey: 'name_ups' }
 };
 /* LIVE alert types — created only from real inputs (Open-Meteo wind, geometry vs operator-entered azimuth, on-device camera, cabinet sensor). Never part of the simulated feed. */
 Object.assign(ALERT_DEFS, {
-  wind: { device: 'OPEN-METEO', kind: 'dish', sev: 'medium', flags: { drift: false, hot: false, wind: true }, live: true },
-  drift: { device: 'GEO-CALC', kind: 'dish', sev: 'medium', flags: { drift: true, hot: false }, live: true },
+  wind: { device: 'OPEN-METEO', kind: 'dish', sev: 'medium', flags: { drift: false, hot: false, wind: true }, live: true, assetKey: 'name_dish' },
+  rain: { device: 'OPEN-METEO', kind: 'rain', sev: 'medium', flags: { drift: false, hot: false, rain: true }, live: true, assetKey: 'name_ku' },
+  drift: { device: 'GEO-CALC', kind: 'dish', sev: 'medium', flags: { drift: true, hot: false }, live: true, assetKey: 'name_dish' },
   person: { device: 'CAM-LOCAL', kind: 'night', sev: 'high', flags: { drift: false, hot: false, cam: true }, live: true },
   cabtemp: { device: 'SENSOR', kind: 'thermal', sev: 'high', flags: { drift: false, hot: true }, live: true }
 });
 const ALERT_ORDER = ['snr', 'pa', 'track', 'pdu'];
 const isLiveAlert = a => !!a.live;
-const assetOf = (kind, target, L) => kind === 'dish' ? t('asset_dish', null, L) : kind === 'thermal' ? t('asset_cab', { c: target }, L) : kind === 'perimeter' ? t('asset_fence', null, L) : t('asset_fence_night', null, L);
+const assetOf = (kind, target, L, assetKey) => assetKey ? t(assetKey, null, L) : kind === 'rain' ? t('name_ku', null, L) : kind === 'dish' ? t('name_dish', null, L) : kind === 'thermal' ? cabAsset(target, L) : kind === 'perimeter' ? t('asset_fence', null, L) : t('asset_fence_night', null, L);
 function liveLine(a) {
   const d = a.data || {};
   switch (a.type) {
-    case 'wind': return 'WIND=' + d.w + ' km/h  GUST=' + d.g + ' km/h  THRESH=' + d.thr + ' km/h  SRC=open-meteo.com  EVT=WIND_ADVISORY';
+    case 'wind': return 'WIND=' + d.w + ' km/h  GUST=' + d.g + ' km/h  THRESH=' + d.thr + ' km/h  SRC=open-meteo.com  EVT=WIND_ADVISORY  ASSET=GEO dish (C-band)';
+    case 'rain': return 'PRECIP=' + d.rain + ' mm  THRESH=' + d.thr + ' mm  WIND=' + d.w + ' km/h  SRC=open-meteo.com  EVT=RAIN_FADE_ADVISORY  NOTE=C-band resists rain; Ku-band feed/LNB more sensitive';
     case 'drift': return 'AZ_ENTERED=' + f1(d.measured) + ' deg  AZ_COMPUTED=' + f1(d.computed) + ' deg  DEV=' + (d.dev > 0 ? '+' : '') + f1(d.dev) + ' deg  LIMIT=0.50 deg  SRC=geometry+operator input';
     case 'person': return 'CLASS=person  FRAMES=' + d.n + '  SRC=on-device camera (COCO-SSD)  EVT=GATE_PERSON';
     default: return 'CAB_' + d.cab + '_TEMP=' + f1(d.temp) + ' C  THRESH=' + d.thr + ' C  SRC=' + (d.real ? 'sensor device ' + (d.dev || '?') : 'SIMULATED toggle') + '  EVT=CAB_OVER_TEMP';
@@ -328,7 +341,7 @@ function toast(msg) {
 function logText(e, html, L) {
   const a = e.args || {}, f = html ? ltr : (x => x);
   const v = { id: f(a.id || ''), robot: f(a.robot || ''), kind: a.kind ? kindName(a.kind, L) : '', tok: f(a.tok || ''), text: a.text ? '“' + a.text + '”' : '', alert: f(a.alert || ''), type: a.type ? t('al_' + a.type, null, L) : '',
-    asset: a.target ? t('asset_cab', { c: a.target }, L) : '', fx: a.fx ? t('fx_' + a.fx, null, L) : '' };
+    asset: a.target ? cabAsset(a.target, L) : '', fx: a.fx ? t('fx_' + a.fx, null, L) : '' };
   return t('a_' + e.action, v, L);
 }
 function robotStateText(rb) { return t('rs_' + rb.state); }
@@ -354,11 +367,13 @@ function renderFleet() {
 }
 
 function statusChip(m) { return '<span class="chip ms-' + m.status + '">' + esc(t('ms_' + m.status)) + '</span>'; }
+function missionLive(m) { const a = m.alertId && S.alerts.find(x => x.id === m.alertId); return !!(a && a.live); }
 function missionItem(m) {
-  let h = '<article class="mcard m-' + m.status + '" data-m="' + m.id + '"><header><b>' + esc(kindName(m.kind)) + '</b>' + ltr(m.id) + statusChip(m) + '</header>' +
+  const live = missionLive(m);
+  let h = '<article class="mcard m-' + m.status + '" data-m="' + m.id + '"><header><b>' + esc(kindName(m.kind)) + '</b>' + ltr(m.id) + (live ? '<span class="live-badge sm"><i></i>LIVE / حي</span>' : '') + statusChip(m) + '</header>' +
     '<p class="small muted">' + esc(t('robot')) + ' ' + ltr(m.robot) + ' · ' + esc(t('src_' + m.src)) + (m.text ? ' · “' + esc(m.text) + '”' : '') + '</p>';
   if (m.status === 'awaiting') {
-    h += cardFields(m) + '<p class="hint">' + esc(t('hint_awaiting', { r: m.robot })) + '</p><div class="acts"><button class="btn btn-ok" type="button" data-approve="' + m.id + '"><svg class="ico"><use href="#i-check"/></svg>' + esc(t('approve')) + '</button>' +
+    h += cardFields(m) + (live ? '<p class="tiny"><span class="live-badge sm"><i></i>LIVE / حي</span> ' + esc(t('lv_pending_live')) + '</p>' : '') + '<p class="hint">' + esc(t('hint_awaiting', { r: m.robot })) + '</p><div class="acts"><button class="btn btn-ok" type="button" data-approve="' + m.id + '"><svg class="ico"><use href="#i-check"/></svg>' + esc(t('approve')) + '</button>' +
       '<button class="btn btn-ghost" type="button" data-reject="' + m.id + '"><svg class="ico"><use href="#i-x"/></svg>' + esc(t('reject')) + '</button></div>';
   } else if (m.status === 'running') {
     h += '<div class="bar"><span data-mp="' + m.id + '" style="width:' + Math.round((m.progress || 0) * 100) + '%"></span></div><p class="small">' + esc(t(S.cap || 'cap_to_dish')) + ' · <b data-mpt="' + m.id + '">' + Math.round((m.progress || 0) * 100) + '%</b></p>' +
@@ -381,8 +396,8 @@ function renderQueue() {
   bindMissionButtons($('#queue'));
 }
 function renderTemplates() {
-  const icons = { dish: 'i-dish', thermal: 'i-therm', perimeter: 'i-fence', night: 'i-moon' };
-  $('#tpl-grid').innerHTML = ['dish', 'thermal', 'perimeter', 'night'].map(k =>
+  const icons = { dish: 'i-dish', rain: 'i-dish', thermal: 'i-therm', perimeter: 'i-fence', night: 'i-moon' };
+  $('#tpl-grid').innerHTML = ['dish', 'rain', 'thermal', 'perimeter', 'night'].map(k =>
     '<article class="tpl"><div class="tpl-h"><svg class="ico"><use href="#' + icons[k] + '"/></svg><h3>' + esc(kindName(k)) + '</h3></div><p class="small muted">' + esc(t('kd_' + k)) + '</p>' +
     (k === 'thermal' ? '<label class="fld"><span class="tiny">' + esc(t('tpl_cab')) + '</span><select data-tpl-cab><option value="">' + esc(t('tpl_cab_all')) + '</option><option>A</option><option>B</option><option>C</option></select></label>' : '') +
     '<button class="btn btn-primary btn-block" type="button" data-propose="' + k + '"><svg class="ico"><use href="#i-plus"/></svg>' + esc(t('propose')) + '</button></article>').join('');
@@ -425,7 +440,7 @@ function renderHud() {
     main = '<div class="hud-l"><div class="hud-t"><span class="chip ok">' + esc(t('hud_idle')) + '</span>' + (done ? '<b>' + esc(t('hud_last', { k: kindName(done.kind) })) + '</b> ' + ltr(done.id) : '') + '</div><p class="hud-idle">' + esc(t('hud_idle_msg')) + '</p></div>' +
       '<div class="hud-r">' + roleSel + (done ? '<button class="btn btn-ghost" id="hud-report" type="button" data-hid="' + done.id + '"><svg class="ico"><use href="#i-print"/></svg>' + esc(t('view_report')) + '</button>' : '') + '</div>';
   }
-  const quick = '<div class="hud-quick"><div class="qb">' + ['dish', 'thermal', 'perimeter', 'night'].map(k => '<button class="btn btn-primary btn-sm" type="button" data-quick="' + k + '">' + esc(kindName(k)) + '</button>').join('') + '</div>' +
+  const quick = '<div class="hud-quick"><div class="qb">' + ['dish', 'rain', 'thermal', 'perimeter', 'night'].map(k => '<button class="btn btn-primary btn-sm" type="button" data-quick="' + k + '">' + esc(kindName(k)) + '</button>').join('') + '</div>' +
     '<form class="qf" id="q-form" autocomplete="off"><input id="q-cmd" type="text" maxlength="160" placeholder="' + esc(t('cmd_ph')) + '" aria-label="' + esc(t('cmd_label')) + '"><button class="btn btn-ghost" type="submit">' + esc(t('cmd_go')) + '</button></form></div>';
   const oq = $('#q-cmd'), keep = oq ? { v: oq.value, f: document.activeElement === oq } : null;
   hud.innerHTML = quick + '<div class="hud-main">' + main + '</div>';
@@ -466,10 +481,10 @@ function renderCmd() {
 function alertCard(a) {
   const d = ALERT_DEFS[a.type], open = a.status === 'open', sevc = d.sev, live = isLiveAlert(a);
   const m = a.missionId && S.missions.find(x => x.id === a.missionId), dat = a.data || {};
-  const vars = { w: dat.w, g: dat.g, thr: dat.thr, m: dat.measured != null ? f1(dat.measured) : '', c: dat.computed != null ? f1(dat.computed) : (dat.cab || ''), sat: dat.sat, d: dat.dev != null ? (dat.dev > 0 ? '+' : '') + f1(dat.dev) : '', n: dat.n, v: dat.temp != null ? f1(dat.temp) : '', src: dat.src ? t(dat.src) : '' };
+  const vars = { w: dat.w, g: dat.g, thr: dat.thr, rain: dat.rain, m: dat.measured != null ? f1(dat.measured) : '', c: dat.computed != null ? f1(dat.computed) : (dat.cab || ''), sat: dat.sat, d: dat.dev != null ? (dat.dev > 0 ? '+' : '') + f1(dat.dev) : '', n: dat.n, v: dat.temp != null ? f1(dat.temp) : '', src: dat.src ? t(dat.src) : '' };
   const tag = live ? '<span class="live-badge"><i></i>LIVE / حي</span>' : '<span class="chip sim-chip">SIMULATED</span>';
   return '<article class="alert sev-' + sevc + (open ? '' : ' closed') + (live ? ' is-live' : '') + '" data-a="' + a.id + '" data-type="' + a.type + '"><header>' + tag + '<span class="chip th-' + sevc + '">' + esc(t('th_' + sevc)) + '</span><b>' + esc(t('al_' + a.type)) + '</b></header>' +
-    '<p class="tiny muted">' + ltr(a.id) + ' · ' + ltr(fClock(a.ts)) + ' · ' + esc(t('al_device')) + ': ' + ltr(d.device) + ' · ' + esc(t('f_asset')) + ': ' + esc(assetOf(d.kind, dat.cab || d.target)) + '</p>' +
+    '<p class="tiny muted">' + ltr(a.id) + ' · ' + ltr(fClock(a.ts)) + ' · ' + esc(t('al_device')) + ': ' + ltr(d.device) + ' · ' + esc(t('f_asset')) + ': ' + esc(assetOf(d.kind, dat.cab || d.target, lang, d.assetKey)) + '</p>' +
     '<pre class="logline" dir="ltr">[' + (live ? 'LIVE' : 'SIMULATED') + '] ' + esc(fClock(a.ts)) + ' ' + esc(d.device) + ' ' + esc(a.line) + '</pre><p class="small">' + esc(t('al_' + a.type + '_d', vars)) + '</p>' +
     (open ? '<div class="acts"><button class="btn btn-primary btn-sm" type="button" data-draft="' + a.id + '"><svg class="ico"><use href="#i-bolt"/></svg>' + esc(t('al_draftbtn')) + '</button><button class="btn btn-ghost btn-sm" type="button" data-dismiss="' + a.id + '">' + esc(t('al_dismiss')) + '</button></div>'
       : '<p class="tiny ' + (a.status === 'drafted' ? 'ok-t' : 'muted') + '">' + esc(t('al_st_' + a.status)) + (m ? ' · ' + ltr(m.id) : '') + '</p>') + '</article>';
@@ -515,10 +530,10 @@ function paperHead(title, id, ts, L) {
   return '<div class="rp-sim">' + SIMTXT + '</div><header class="rp-h"><div><div class="rp-brand">AICore Robotics Ops 3D</div><h1 id="rp-h">' + esc(title) + ' ' + ltr(id) + '</h1></div><div class="rp-date">' + ltr(fDT(ts)) + '</div></header>';
 }
 function paperFoot(L) {
-  return '<p class="rp-disc">' + esc(t('rp_disclaimer', null, L)) + '<br>' + esc(t('roadmap_note', null, L)) + '</p><p class="rp-foot">' + esc(t('ct_name', null, L)) + ' · AICore Digital LLC · Richmond, VA · aicoredigital.com · elycheikh@aicoredigital.com · wa.me/18044853384<br>' + esc(t('rp_clock', { tz: tzAbbr(Date.now()), name: Intl.DateTimeFormat().resolvedOptions().timeZone || '' }, L)) + '</p>';
+  return '<p class="rp-disc">' + esc(t('geo_note', null, L)) + '<br>' + esc(t('rp_disclaimer', null, L)) + '<br>' + esc(t('roadmap_note', null, L)) + '</p><p class="rp-foot">' + esc(t('ct_name', null, L)) + ' · AICore Digital LLC · Richmond, VA · aicoredigital.com · elycheikh@aicoredigital.com · wa.me/18044853384<br>' + esc(t('rp_clock', { tz: tzAbbr(Date.now()), name: Intl.DateTimeFormat().resolvedOptions().timeZone || '' }, L)) + '</p>';
 }
 const LIVE_TAG = ' <span class="live-badge sm"><i></i>LIVE / حي</span>', SIMS_TAG = ' <span class="sim-tag sm">SIMULATED</span>';
-const findingVal = (f, L) => ((typeof f.v === 'string' && f.v.indexOf('v_') === 0) ? esc(t(f.v, null, L)) : ltr(f.v)) + (f.live ? LIVE_TAG : f.simSensor ? SIMS_TAG : '');
+const findingVal = (f, L) => ((typeof f.v === 'string' && f.v.indexOf('v_') === 0) ? esc(t(f.v, null, L)) : ltr(f.v)) + (f.live ? LIVE_TAG : (f.simSensor || f.simNote) ? SIMS_TAG : '');
 function missionReportInner(m, L) {
   const p = plan(m, L), fv = v => (typeof v === 'string' && v.indexOf('v_') === 0) ? t(v, null, L) : ltr(v), attn = m.findings.some(f => f.attn);
   return paperHead(t('rp_title', null, L), m.id, m.tEnd, L) +
@@ -539,15 +554,17 @@ function missionReportInner(m, L) {
     '<tr><th scope="row">' + esc(t('rp_completed', null, L)) + '</th><td>' + ltr(fDT(m.tEnd)) + '</td></tr>' +
     '<tr><th scope="row">' + esc(t('f_audit', null, L)) + '</th><td>' + ltr(m.token) + '</td></tr></tbody></table>' + paperFoot(L);
 }
-const REC = { snr: 'rec_snr', track: 'rec_track', pa: 'rec_pa', pdu: 'rec_pdu', wind: 'rec_wind', drift: 'rec_drift', person: 'rec_person', cabtemp: 'rec_cabtemp' };
+const REC = { snr: 'rec_snr', track: 'rec_track', pa: 'rec_pa', pdu: 'rec_pdu', wind: 'rec_wind', rain: 'rec_rain', drift: 'rec_drift', person: 'rec_person', cabtemp: 'rec_cabtemp' };
 function dispatchSection(L, id, ts) {
   const open = S.alerts.filter(a => a.status === 'open' || a.status === 'drafted'), last = S.missions.find(m => m.status === 'done');
   const rows = open.length ? open.map(a => { const d = ALERT_DEFS[a.type]; return '<tr><td>' + ltr(a.id) + '</td><td>' + ltr(fDT(a.ts)) + '</td><td>' + esc(d.device) + '</td><td><pre>[' + (a.live ? 'LIVE' : 'SIMULATED') + '] ' + esc(a.line) + '</pre></td><td>' + esc(t('th_' + d.sev, null, L)) + '</td></tr>'; }).join('') : '<tr><td colspan="5">' + esc(t('al_none', null, L)) + '</td></tr>';
   const recs = Array.from(new Set(open.map(a => a.type))).map(k => '<li>' + esc(t(REC[k], null, L)) + '</li>').join('') || '<li>' + esc(t('rec_none', null, L)) + '</li>';
   const findings = last ? '<table><thead><tr><th>' + esc(t('rp_item', null, L)) + '</th><th>' + esc(t('rp_value', null, L)) + '</th><th>' + esc(t('rp_status', null, L)) + '</th></tr></thead><tbody>' + last.findings.map(f => '<tr><td>' + esc(t(f.k, null, L)) + '</td><td>' + findingVal(f, L) + '</td><td class="' + (f.attn ? 'attn' : 'ok') + '">' + esc(t(f.attn ? 'rp_attn' : 'rp_ok', null, L)) + '</td></tr>').join('') + '</tbody></table><p class="tiny">' + esc(kindName(last.kind, L)) + ' ' + ltr(last.id) + ' · ' + ltr(fDT(last.tEnd)) + ' · ' + esc(t('approved_by', null, L)) + ': ' + esc(actorText(last.by, L)) + '</p>' : '<p>' + esc(t('dp_nomission', null, L)) + '</p>';
+  const assets = ['name_dish', 'name_ku', 'name_hpa', 'name_idu', 'name_ups', 'name_badr'].map(k => '<li>' + esc(t(k, null, L)) + (k === 'name_badr' ? ' — ' + esc(t('dp_badr_note', null, L)) : '') + '</li>').join('');
   return '<div dir="' + (L === 'ar' ? 'rtl' : 'ltr') + '" lang="' + L + '"><h2 class="dsec">' + esc(t('dp_title', null, L)) + ' ' + ltr(id) + '</h2>' +
     '<table><tbody><tr><th scope="row">' + esc(t('dp_to', null, L)) + '</th><td>' + esc(t('dp_to_v', null, L)) + '</td></tr><tr><th scope="row">' + esc(t('dp_site', null, L)) + '</th><td>' + esc(t('site_name', null, L)) + '</td></tr>' +
     '<tr><th scope="row">' + esc(t('dp_prep', null, L)) + '</th><td>' + esc(roleName(S.role, L)) + ' · ' + ltr(fDT(ts)) + '</td></tr><tr><th scope="row">' + esc(t('dp_status', null, L)) + '</th><td>' + esc(t('dp_status_v', null, L)) + '</td></tr></tbody></table>' +
+    '<h2>' + esc(t('dp_assets', null, L)) + '</h2><ul>' + assets + '</ul><p class="tiny">' + esc(t('geo_note', null, L)) + '</p>' +
     '<h2>' + esc(t('dp_alerts', null, L)) + '</h2><table><thead><tr><th>ID</th><th>' + esc(t('au_time', null, L)) + '</th><th>' + esc(t('al_device', null, L)) + '</th><th>' + esc(t('dp_event', null, L)) + '</th><th>' + esc(t('f_threat', null, L)) + '</th></tr></thead><tbody>' + rows + '</tbody></table>' +
     '<h2>' + esc(t('dp_insp', null, L)) + '</h2>' + findings + '<h2>' + esc(t('dp_rec', null, L)) + '</h2><ul>' + recs + '</ul>' +
     '<h2>' + esc(t('dp_res', null, L)) + '</h2><p>' + esc(t('dp_res_v', null, L)) + '</p></div>';
@@ -592,13 +609,17 @@ function buildLabels() {
   });
   const dz = document.createElement('div'); dz.className = 'lbl lbl-dish'; dz.id = 'lbl-dish'; dz.innerHTML = '<span class="dn"></span><span class="dp"></span><span class="da" hidden></span>'; host.appendChild(dz);
   if (SC) SC.addLabel(dz, () => SC.dishAnchor);
+  const ku = document.createElement('div'); ku.className = 'lbl lbl-ku'; ku.id = 'lbl-ku'; ku.innerHTML = '<span class="kn"></span>'; host.appendChild(ku);
+  if (SC) SC.addLabel(ku, () => SC.kuAnchor);
   const gz = document.createElement('div'); gz.className = 'lbl lbl-gate'; gz.id = 'lbl-gate'; gz.innerHTML = '<span class="gn"></span><span class="ga" hidden></span>'; host.appendChild(gz);
   if (SC) SC.addLabel(gz, () => SC.gateAnchor);
   azBox = $('#lbl-dish .da'); heatLegend = $('#heat-legend');
 }
 function relabel() {
-  ['A', 'B', 'C'].forEach(c => { $('#lbl-cab-' + c + ' .cl').textContent = t('lbl_cab', { c }); });
-  $('#lbl-dish .dn').textContent = t('lbl_dish'); $('#lbl-gate .gn').textContent = t('lbl_gate');
+  ['A', 'B', 'C'].forEach(c => { $('#lbl-cab-' + c + ' .cl').textContent = c + ' · ' + cabRole(c); });
+  $('#lbl-dish .dn').textContent = t('lbl_dish');
+  const ku = $('#lbl-ku .kn'); if (ku) ku.textContent = t('lbl_ku');
+  $('#lbl-gate .gn').textContent = t('lbl_gate');
 }
 function showAz(m) { azBox.hidden = false; azBox.className = 'da ' + (parseFloat(m.az.err) > 0.5 ? 'bad' : 'good'); azBox.innerHTML = '<b>' + esc(t('az_reading')) + '</b> ' + ltr(m.az.az + '°') + (m.az.ref ? ' <span class="muted tiny">(' + esc(t('lv_dp')) + ' ' + ltr(m.az.ref + '°') + ')</span>' : '') + '<br>' + esc(t('f_azerr')) + ' ' + ltr(m.az.err + '°') + ' ' + (parseFloat(m.az.err) > 0.5 ? '⚠' : '✓'); azBox.dataset.mid = m.id; }
 function showHeat(m) {
@@ -616,6 +637,8 @@ function drawFallback() {
   g.clearRect(0, 0, W, H); g.fillStyle = '#0b0b1c'; g.fillRect(0, 0, W, H);
   g.strokeStyle = '#a24aff'; g.lineWidth = 3; g.strokeRect(sx(-14), sz(-9), 28 * 29, 18 * 26);
   g.fillStyle = '#c084fc'; g.beginPath(); g.arc(sx(7), sz(-3), 40, 0, 7); g.fill();
+  g.fillStyle = '#fbbf24'; g.beginPath(); g.arc(sx(LAYOUT.dish.x + 2.5), sz(LAYOUT.dish.z + 1.7), 10, 0, 7); g.fill();
+  g.font = '700 16px sans-serif'; g.textAlign = 'center'; g.fillText('Ku', sx(LAYOUT.dish.x + 2.5), sz(LAYOUT.dish.z + 1.7) - 16);
   ['A', 'B', 'C'].forEach(c => { g.fillStyle = '#3b4080'; g.fillRect(sx(LAYOUT.cab[c].x) - 18, sz(LAYOUT.cab[c].z) - 14, 36, 28); g.fillStyle = '#fff'; g.font = '700 22px sans-serif'; g.textAlign = 'center'; g.fillText(c, sx(LAYOUT.cab[c].x), sz(LAYOUT.cab[c].z) + 8); });
   ROBOT_IDS.forEach(id => { const p = fbPos[id]; g.fillStyle = id === 'R-01' ? '#c084fc' : '#22d3ee'; g.beginPath(); g.arc(sx(p.x), sz(p.z), 14, 0, 7); g.fill(); g.fillStyle = '#fff'; g.font = '700 20px sans-serif'; g.textAlign = 'center'; g.fillText(id + ' ' + Math.round(S.robots[id].batt) + '%', sx(p.x), sz(p.z) - 22); });
 }
@@ -667,7 +690,7 @@ function resetDemo() {
   S = freshState(); fbPos = {}; ROBOT_IDS.forEach(id => { fbPos[id] = { x: LAYOUT.docks[id].x, z: LAYOUT.docks[id].z, yaw: 0 }; });
   if (SC) { SC.resetRobots(); SC.setBeam(null); SC.setHeat(null); SC.setNight(false); SC.setLocked(false); }
   hideFx(); seed(); closeReport(); renderAll();
-  if (LV) { LV.resetArm(); LV.checkWind(); LV.applyPointing(); }
+  if (LV) { LV.resetArm(); LV.checkWind(); LV.checkRain(); LV.applyPointing(); }
 }
 function seed() {
   const now = Date.now();
