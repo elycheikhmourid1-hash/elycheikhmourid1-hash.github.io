@@ -260,7 +260,7 @@ body.rp-open { overflow: hidden; }
 
 /* LIVE additions */
 .msite .hit { fill: transparent; stroke: none; pointer-events: all; }
-.console .lv-legend { flex: 1 1 100%; margin-block-start: 2px; }
+.console .lv-legend { flex: 1 0 100%; width: 100%; margin-block-start: 4px; }
 .alert.is-live { border-color: rgba(52, 211, 153, .55); }
 .alert header .live-badge, .alert header .sim-tag { flex: none; }
 .plan-head { flex-wrap: wrap; }

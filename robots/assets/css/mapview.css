@@ -17,25 +17,30 @@
 }
 .leaflet-bar a:hover { background: #22183a; }
 .leaflet-bar { border: 1px solid rgba(162, 74, 255, .45); }
-.leaflet-div-icon.mv-icon { background: transparent; border: none; }
-
-.mv-pin, .mv-bot, .mv-alert {
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-  width: 100%; height: 100%; box-sizing: border-box; text-align: center; pointer-events: none;
-  border-radius: 10px; background: rgba(8, 8, 22, .92); border: 1px solid rgba(162, 74, 255, .7);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, .45); padding: 2px 4px;
+.leaflet-div-icon.mv-icon { background: transparent; border: none; overflow: visible; }
+.mv-mark { position: relative; width: 16px; height: 16px; }
+.mv-pip {
+  display: block; width: 12px; height: 12px; margin: 2px; border-radius: 50%;
+  background: #c084fc; border: 2px solid #fff; box-shadow: 0 0 0 1px #0b0b16;
 }
-.mv-pin b, .mv-alert b, .mv-bot b { font-size: 11px; line-height: 1.15; font-weight: 800; color: #fff; max-width: 100%; }
-.mv-ex {
-  font-size: 9px; font-weight: 800; letter-spacing: .06em; color: #fde68a;
-  border: 1px solid #fbbf24; border-radius: 999px; padding: 0 5px; line-height: 1.4;
+.mv-mark.is-station .mv-pip { background: #22d3ee; }
+.mv-mark.is-bot .mv-pip { background: #e879f9; }
+.mv-mark.is-alert .mv-pip { background: #f87171; }
+.mv-icon.is-sel .mv-pip { box-shadow: 0 0 0 3px #22d3ee; }
+.mv-name {
+  position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%);
+  white-space: nowrap; font: 800 11px/1.2 var(--mono, ui-monospace, monospace);
+  color: #fff; background: rgba(8, 8, 22, .94); border: 1px solid rgba(162, 74, 255, .8);
+  border-radius: 999px; padding: 1px 6px; pointer-events: none;
 }
-.mv-pin.is-station { border-color: #22d3ee; }
-.mv-icon.is-sel .mv-pin { box-shadow: 0 0 0 2px #22d3ee, 0 6px 16px rgba(0, 0, 0, .45); }
-.mv-bot { flex-direction: row; gap: 4px; border-color: #c084fc; border-radius: 999px; }
-.mv-bot b { font-family: var(--mono, ui-monospace, monospace); font-size: 12px; }
-.mv-bot .sim-tag, .mv-alert .sim-tag, .mv-pin .sim-tag { font-size: 8px; padding: 0 4px; letter-spacing: 0; }
-.mv-alert { flex-direction: row; gap: 4px; border-color: #f87171; background: rgba(40, 10, 16, .94); }
+.mv-name.is-below { bottom: auto; top: 16px; }
+.mv-name[hidden] { display: none !important; }
+.mv-flag {
+  display: inline-flex; align-items: center; flex: 0 0 auto; white-space: nowrap;
+  border: 1px solid #fbbf24; color: #fde68a; background: rgba(40, 24, 4, .92);
+  border-radius: 999px; padding: .05rem .5rem; font-size: .72rem; font-weight: 800; line-height: 1.6;
+}
+.mv-flags { margin: 0 0 .35rem; }
 
 .mv-fail {
   position: absolute; z-index: 500; inset-block-start: .45rem; inset-inline: .6rem; margin-inline: auto;
@@ -84,7 +89,7 @@
     align-items: center; gap: .28rem; flex-wrap: nowrap; padding: .2rem; border-radius: 999px;
     background: rgba(6, 6, 14, .92); border: 1px solid rgba(162, 74, 255, .55); overflow: hidden;
   }
-  .mv-dock .sim-tag { flex: 0 1 auto; max-width: 5.4rem; overflow: hidden; text-overflow: ellipsis; font-size: .62rem; }
+  .mv-dock .mv-flag { flex: 0 0 auto; font-size: .62rem; }
   .mv-dock .m-chip {
     display: inline-flex; align-items: center; justify-content: center; flex: 1 1 auto; min-width: 0;
     border: 1px solid rgba(162, 74, 255, .55); background: rgba(255, 255, 255, .08); color: #fff;
@@ -94,7 +99,7 @@
   .mv-dock .m-chip[aria-pressed="true"] { background: linear-gradient(90deg, #c21fdc, #2fb6e0); border-color: transparent; }
   .mv-sheet:not([hidden]) {
     display: flex; flex-direction: column; position: absolute; z-index: 630;
-    inset-inline: .35rem; inset-block-end: 2.55rem; max-height: 46%; overflow: hidden;
+    inset-inline: .35rem; inset-block-end: 2.55rem; max-height: 35%; overflow: hidden;
     background: rgba(8, 8, 22, .97); border: 1px solid rgba(162, 74, 255, .55); border-radius: .85rem;
   }
   .mv-sheet-h { display: flex; align-items: center; justify-content: space-between; gap: .4rem; padding: .3rem .4rem .3rem .7rem; border-bottom: 1px solid rgba(255,255,255,.12); }
@@ -123,6 +128,7 @@ body.map-on .vtl, body.map-on .camtools, body.map-on .labels, body.map-on #fallb
 }
 @media (max-width: 640px) {
   body.map-on .geo-map > .map-detail { display: none !important; }
+  body.map-on #m-sheet:not([hidden]) { max-height: 35%; }
   .m-sheet .map-detail { display: block !important; position: static; width: auto; max-height: none; inset: auto; background: transparent; border: 0; padding: 0; }
   body.map-on .mv-back, #cam-map { display: none; }
   .m-dock { overflow-x: auto; -webkit-overflow-scrolling: touch; }

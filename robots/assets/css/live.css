@@ -4,9 +4,10 @@
 @keyframes lvpulse { 50% { opacity: .35; } }
 .sim-tag { display: inline-flex; align-items: center; padding: .12em .65em; border-radius: 999px; background: rgba(255, 77, 141, .12); border: 1px solid #ff4d8d; color: #ffd0e2; font-weight: 800; font-size: .78em; letter-spacing: .03em; line-height: 1.5; white-space: nowrap; vertical-align: middle; }
 .na-badge { display: inline-flex; align-items: center; padding: .12em .65em; border-radius: 999px; background: rgba(251, 191, 36, .13); border: 1px solid #fbbf24; color: #fde68a; font-weight: 700; font-size: .78em; line-height: 1.5; vertical-align: middle; }
-.lv-legend { display: flex; align-items: center; gap: .5em .9em; flex-wrap: wrap; font-size: .9em; color: var(--muted, #b7b9d2); }
-.lv-legend b { font-weight: 700; color: var(--ink-2, #e2e3f2); }
-.lv-legend .lg { display: inline-flex; align-items: center; gap: .45em; }
+.lv-legend { display: flex; align-items: flex-start; gap: .45em 1em; flex-wrap: wrap; font-size: .9em; color: var(--muted, #b7b9d2); width: 100%; min-width: 0; }
+.lv-legend b { font-weight: 700; color: var(--ink-2, #e2e3f2); flex: 0 0 auto; line-height: 1.7; }
+.lv-legend .lv-lg { display: flex; flex: 1 1 18rem; align-items: flex-start; gap: .4em; width: auto; height: auto; min-width: min(100%, 16rem); max-width: 100%; border-radius: 0; }
+.lv-legend .lv-lg > span:last-child { min-width: 0; flex: 1 1 auto; white-space: normal; overflow-wrap: break-word; line-height: 1.35; }
 
 .wx-sec { margin-block-end: 1em; }
 .wx-sec .wx-head { display: flex; align-items: center; justify-content: space-between; gap: .8em; flex-wrap: wrap; margin-block-end: .7em; }

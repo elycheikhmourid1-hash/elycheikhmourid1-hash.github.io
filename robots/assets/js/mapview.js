@@ -121,10 +121,15 @@
       if (opts.onBase) opts.onBase(mode);
       return mode;
     }
-    function pinHtml(p) {
-      return '<div class="mv-pin' + (p.kind === 'station' ? ' is-station' : '') + '" dir="auto">' +
-        '<span class="mv-ex">EXAMPLE</span><b>' + esc(t('map_pt_' + p.id)) + '</b>' +
-        '<span class="sim-tag">' + esc(t('lv_sim_tag')) + '</span></div>';
+    function shortPt(id) {
+      var s = t('map_pin_' + id);
+      return s === 'map_pin_' + id ? id : s;
+    }
+    function markHtml(cls, text) {
+      return '<div class="mv-mark ' + cls + '"><span class="mv-name">' + esc(text) + '</span><i class="mv-pip"></i></div>';
+    }
+    function markIcon(cls, text, anchor) {
+      return L.divIcon({ className: 'mv-icon', html: markHtml(cls, text), iconSize: [16, 16], iconAnchor: anchor || [8, 8] });
     }
     function applySel() {
       Object.keys(markers).forEach(function (k) {
@@ -137,11 +142,12 @@
       selected = id;
       applySel();
       if (opts.onSelect) opts.onSelect(id, !!fromUser);
+      if (fromUser) nudgeSelected();
+      layoutLabels();
     }
     function addMarkers() {
       POINTS.forEach(function (p) {
-        var icon = L.divIcon({ className: 'mv-icon', html: pinHtml(p), iconSize: [124, 64], iconAnchor: [62, 60] });
-        var m = L.marker([p.lat, p.lon], { icon: icon, keyboard: true, title: 'EXAMPLE — ' + t('map_pt_' + p.id), alt: 'EXAMPLE' });
+        var m = L.marker([p.lat, p.lon], { icon: markIcon(p.kind === 'station' ? 'is-station' : 'is-site', shortPt(p.id)), keyboard: true, title: 'EXAMPLE — ' + t('map_pt_' + p.id), alt: 'EXAMPLE' });
         m.on('click', function () { select(p.id, true); });
         m.addTo(map);
         markers[p.id] = m;
@@ -153,12 +159,7 @@
     function ensureRobots() {
       ['R-01', 'R-02'].forEach(function (id) {
         if (robots[id]) return;
-        var icon = L.divIcon({
-          className: 'mv-icon',
-          html: '<div class="mv-bot" dir="ltr"><b>' + id + '</b><span class="sim-tag">SIMULATION</span></div>',
-          iconSize: [92, 28], iconAnchor: [46, 14]
-        });
-        var m = L.marker(CENTER, { icon: icon, keyboard: true, zIndexOffset: 400, title: id + ' SIMULATION', alt: id });
+        var m = L.marker(CENTER, { icon: markIcon('is-bot ' + (id === 'R-02' ? 'is-r2' : 'is-r1'), id), keyboard: true, zIndexOffset: 400, title: id + ' SIMULATION', alt: id });
         m.on('click', function () { select(nextStop(id), true); });
         m.addTo(map);
         robots[id] = m;
@@ -183,13 +184,89 @@
       Object.keys(ROUTES).forEach(function (id) {
         if (robots[id]) robots[id].setLatLng(coord(ROUTES[id]));
       });
+      layoutLabels();
       if (!reduced) raf = requestAnimationFrame(frame);
+    }
+    function labelBox(pt, text, below) {
+      var w = Math.max(26, String(text).length * 7.2 + 14);
+      var h = 18;
+      return { x: pt.x - w / 2, y: below ? pt.y + 14 : pt.y - 14 - h, w: w, h: h };
+    }
+    function boxesHit(a, b) {
+      return a.x < b.x + b.w - 1 && a.x + a.w > b.x + 1 && a.y < b.y + b.h - 1 && a.y + a.h > b.y + 1;
+    }
+    function obstacleBoxes() {
+      var root = map.getContainer().getBoundingClientRect();
+      var out = [];
+      var nodes = map.getContainer().querySelectorAll('.leaflet-control, .mv-layer, .mv-back, .mv-fail, .mv-dock, .mv-sheet');
+      Array.prototype.forEach.call(nodes, function (node) {
+        if (node.classList && node.classList.contains('leaflet-marker-icon')) return;
+        var st = window.getComputedStyle(node);
+        if (st.display === 'none' || st.visibility === 'hidden' || node.hidden) return;
+        var r = node.getBoundingClientRect();
+        if (r.width < 2 || r.height < 2) return;
+        out.push({ x: r.left - root.left, y: r.top - root.top, w: r.width, h: r.height });
+      });
+      ['.map-detail', '.sim-badge', '#m-sheet', '#m-dock'].forEach(function (sel) {
+        var node = document.querySelector(sel);
+        if (!node || (node.closest && node.closest('.leaflet-container'))) return;
+        var st = window.getComputedStyle(node);
+        if (st.display === 'none' || st.visibility === 'hidden' || node.hidden) return;
+        var r = node.getBoundingClientRect();
+        if (r.width < 2 || r.height < 2) return;
+        if (r.right < root.left || r.left > root.right || r.bottom < root.top || r.top > root.bottom) return;
+        out.push({ x: r.left - root.left, y: r.top - root.top, w: r.width, h: r.height });
+      });
+      return out;
+    }
+    function layoutLabels() {
+      if (!map) return;
+      var z = map.getZoom();
+      var blocked = obstacleBoxes();
+      var placed = blocked.slice();
+      var list = [];
+      POINTS.forEach(function (p) {
+        if (markers[p.id]) list.push({ marker: markers[p.id], id: p.id, text: shortPt(p.id), kind: 'site', pri: p.id === selected ? 3 : 1, below: false });
+      });
+      ['R-01', 'R-02'].forEach(function (id, i) {
+        if (robots[id]) list.push({ marker: robots[id], id: id, text: id, kind: 'bot', pri: 2, below: i === 1 });
+      });
+      Object.keys(alerts).forEach(function (id) {
+        if (alerts[id]) list.push({ marker: alerts[id], id: 'al-' + id, text: '', kind: 'alert', pri: 0, below: false });
+      });
+      list.sort(function (a, b) { return b.pri - a.pri; });
+      list.forEach(function (it) {
+        var el = it.marker.getElement(); if (!el) return;
+        var name = el.querySelector('.mv-name'); if (!name) return;
+        var show = !!it.text && (it.pri >= 3 || it.kind === 'bot' || (it.kind === 'site' && z >= 15));
+        if (!show) { name.hidden = true; return; }
+        var pt = map.latLngToContainerPoint(it.marker.getLatLng());
+        var box = labelBox(pt, it.text, it.below);
+        var flip = labelBox(pt, it.text, !it.below);
+        var clear = function (b) { return !placed.some(function (o) { return boxesHit(b, o); }); };
+        if (!clear(box) && clear(flip)) { box = flip; it.below = !it.below; }
+        else if (!clear(box)) { name.hidden = true; return; }
+        name.hidden = false;
+        name.classList.toggle('is-below', !!it.below);
+        placed.push(box);
+      });
+    }
+    function nudgeSelected() {
+      if (!map || !window.matchMedia('(max-width: 640px)').matches) return;
+      var p = pointById(selected); if (!p) return;
+      var pt = map.latLngToContainerPoint([p.lat, p.lon]);
+      var target = map.getSize().y * 0.28;
+      if (Math.abs(pt.y - target) > 6) map.panBy([0, pt.y - target], { animate: false });
+      layoutLabels();
     }
     function redrawLabels() {
       if (!map) return;
       POINTS.forEach(function (p) {
         if (!markers[p.id]) return;
-        markers[p.id].setIcon(L.divIcon({ className: 'mv-icon', html: pinHtml(p), iconSize: [124, 64], iconAnchor: [62, 60] }));
+        markers[p.id].setIcon(markIcon(p.kind === 'station' ? 'is-station' : 'is-site', shortPt(p.id)));
+      });
+      ['R-01', 'R-02'].forEach(function (id) {
+        if (robots[id]) robots[id].setIcon(markIcon('is-bot ' + (id === 'R-02' ? 'is-r2' : 'is-r1'), id));
       });
       applySel();
       Object.keys(alerts).forEach(function (id) {
@@ -197,13 +274,10 @@
       });
       var node = failNode();
       if (node && !node.hidden) node.textContent = t('map_fail');
+      layoutLabels();
     }
     function alertIcon() {
-      return L.divIcon({
-        className: 'mv-icon',
-        html: '<div class="mv-alert" dir="auto"><span class="sim-tag">SIMULATION</span><b>' + esc(t('map_alert')) + '</b></div>',
-        iconSize: [108, 26], iconAnchor: [54, 92]
-      });
+      return markIcon('is-alert', '', [-4, 8]);
     }
     function setAlertPoints(ids) {
       if (!map) return;
@@ -215,11 +289,12 @@
       Object.keys(want).forEach(function (id) {
         if (alerts[id]) return;
         var p = pointById(id);
-        var m = L.marker([p.lat, p.lon], { icon: alertIcon(), keyboard: true, zIndexOffset: 500, title: t('map_alert') + ' SIMULATION' });
+        var m = L.marker([p.lat, p.lon], { icon: alertIcon(), keyboard: true, zIndexOffset: 280, title: t('map_alert') + ' SIMULATION' });
         m.on('click', function () { select(id, true); });
         m.addTo(map);
         alerts[id] = m;
       });
+      layoutLabels();
     }
     function init() {
       if (map || !el || !window.L) return false;
@@ -249,6 +324,7 @@
       ensureRobots();
       if (navigator && navigator.onLine === false) showFail(true);
       window.addEventListener('offline', function () { showFail(true); });
+      map.on('zoomend moveend', layoutLabels);
       select(selected, false);
       return true;
     }
@@ -277,7 +353,8 @@
       selected: function () { return selected; },
       point: pointById,
       setAlertPoints: setAlertPoints,
-      redrawLabels: redrawLabels
+      redrawLabels: redrawLabels,
+      nudge: nudgeSelected
     };
   }
 

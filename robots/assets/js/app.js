@@ -665,7 +665,7 @@
     var awaiting = S.missions.filter(function (m) { return m.site === siteId && m.status === 'awaiting'; });
     if (awaiting.length) {
       var m = awaiting[0];
-      return '<p class="tiny">' + (m.live ? '<span class="live-badge"><i></i>LIVE / حي</span> ' : '') + '<span class="sim-tag">' + esc(t('lv_sim_tag')) + '</span></p>' +
+      return (m.live ? '<p class="tiny"><span class="live-badge"><i></i>LIVE / حي</span></p>' : '') +
         '<p><b>' + esc(t('tpl.' + m.tpl + '.name')) + '</b> ' + ltr(m.id) + '</p>' +
         '<p class="small muted">' + esc(t('site.' + m.site)) + ' · ' + esc(t('robot')) + ' ' + ltr(m.robot) + '</p>' +
         '<p class="hint tiny">' + esc(t('hint_awaiting')) + '</p>' +
@@ -678,7 +678,7 @@
       var a = open[0];
       var prefix = (a.site === 'gs' && (I[lang]['al.' + a.type + '.gs.title'] != null || I.ar['al.' + a.type + '.gs.title'] != null)) ? 'al.' + a.type + '.gs.' : 'al.' + a.type + '.';
       var vars = { v: a.v, thr: a.thr || '', site: t('lv_wx_site_' + (WX_OF[a.site] || 'nkc')), robot: a.robot };
-      return '<p class="tiny">' + (a.live ? '<span class="live-badge"><i></i>LIVE / حي</span> ' : '<span class="sim-tag">' + esc(t('lv_sim_tag')) + '</span> ') + esc(t('sev.' + a.sev)) + '</p>' +
+      return '<p class="tiny">' + (a.live ? '<span class="live-badge"><i></i>LIVE / حي</span> ' : '') + esc(t('sev.' + a.sev)) + '</p>' +
         '<p><b>' + esc(t(prefix + 'title')) + '</b> ' + ltr(a.id) + '</p>' +
         '<p class="small">' + esc(t(prefix + 'detail', vars)) + '</p>' +
         '<p class="hint tiny">' + esc(t('al_draft_note')) + '</p>' +
@@ -691,8 +691,8 @@
     var host = $('#mv-detail'); if (!host || !window.MapView) return;
     var id = mvApi ? mvApi.selected() : 'gs';
     var p = MapView.point(id) || MapView.POINTS[0];
-    host.innerHTML = '<h2 class="mv-h"><span class="mv-ex">EXAMPLE</span> ' + esc(t('map_pt_' + p.id)) + '</h2>' +
-      '<p class="tiny"><span class="sim-tag">' + esc(t('lv_sim_tag')) + '</span></p>' +
+    host.innerHTML = '<h2 class="mv-h">' + esc(t('map_pt_' + p.id)) + '</h2>' +
+      '<p class="mv-flags"><span class="mv-flag">EXAMPLE · SIMULATION</span></p>' +
       '<h3 class="mv-h3">' + esc(t('map_task_h')) + '</h3>' + mapTaskHtml(p.id === 'ex1' || p.id === 'ex2' ? null : p.id) +
       MapView.liveHtml({ t: t, esc: esc, ltr: ltr, lat: p.lat, lon: p.lon });
     var title = $('#mv-sheet-t'); if (title) title.textContent = t('map_pt_' + p.id);
@@ -740,6 +740,7 @@
     $('#mv-sheet').hidden = false;
     mvOpen = true;
     $('#mv-chip-point').setAttribute('aria-pressed', 'true');
+    if (mvApi) mvApi.nudge();
     var x = $('#mv-sheet-x'); if (x) x.focus();
   }
   function ensureMap() {

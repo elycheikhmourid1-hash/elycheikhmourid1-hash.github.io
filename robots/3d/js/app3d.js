@@ -668,7 +668,7 @@ function mapTaskHtml(pointId) {
   const awaiting = S.missions.filter(m => m.status === 'awaiting');
   if (awaiting.length) {
     const m = awaiting[0], live = missionLive(m);
-    return '<p class="tiny">' + (live ? '<span class="live-badge"><i></i>LIVE / حي</span>' : '<span class="sim-tag">' + esc(t('lv_sim_tag')) + '</span>') + '</p>' +
+    return (live ? '<p class="tiny"><span class="live-badge"><i></i>LIVE / حي</span></p>' : '') +
       '<p><b>' + esc(kindName(m.kind)) + '</b> ' + ltr(m.id) + '</p>' +
       '<p class="small muted">' + esc(t('robot')) + ' ' + ltr(m.robot) + '</p>' +
       '<p class="hint tiny">' + esc(t('hint_awaiting', { r: m.robot })) + '</p>' +
@@ -680,7 +680,7 @@ function mapTaskHtml(pointId) {
   if (open.length) {
     const a = open[0], live = isLiveAlert(a), d = ALERT_DEFS[a.type] || {}, dat = a.data || {};
     const vars = { w: dat.w, g: dat.g, thr: dat.thr, rain: dat.rain, m: dat.measured != null ? f1(dat.measured) : '', c: dat.computed != null ? f1(dat.computed) : (dat.cab || ''), sat: dat.sat, d: dat.dev != null ? (dat.dev > 0 ? '+' : '') + f1(dat.dev) : '', n: dat.n, v: dat.temp != null ? f1(dat.temp) : '', src: dat.src ? t(dat.src) : '' };
-    return '<p class="tiny">' + (live ? '<span class="live-badge"><i></i>LIVE / حي</span>' : '<span class="sim-tag">' + esc(t('lv_sim_tag')) + '</span>') + ' ' + esc(t('th_' + (d.sev || 'medium'))) + '</p>' +
+    return '<p class="tiny">' + (live ? '<span class="live-badge"><i></i>LIVE / حي</span> ' : '') + esc(t('th_' + (d.sev || 'medium'))) + '</p>' +
       '<p><b>' + esc(t('al_' + a.type)) + '</b> ' + ltr(a.id) + '</p>' +
       '<p class="small">' + esc(t('al_' + a.type + '_d', vars)) + '</p>' +
       '<div class="acts"><button class="btn btn-primary btn-sm" type="button" data-mv-draft="' + a.id + '"><svg class="ico"><use href="#i-bolt"/></svg>' + esc(t('al_draftbtn')) + '</button>' +
@@ -693,8 +693,8 @@ function renderMapDetail() {
   const host = $('#map-detail'); if (!host || !window.MapView) return;
   const id = mvApi ? mvApi.selected() : 'gs';
   const p = MapView.point(id) || MapView.POINTS[0];
-  host.innerHTML = '<h2 class="mv-h"><span class="mv-ex">EXAMPLE</span> ' + esc(t('map_pt_' + p.id)) + '</h2>' +
-    '<p class="tiny"><span class="sim-tag">' + esc(t('lv_sim_tag')) + '</span></p>' +
+  host.innerHTML = '<h2 class="mv-h">' + esc(t('map_pt_' + p.id)) + '</h2>' +
+    '<p class="mv-flags"><span class="mv-flag">EXAMPLE · SIMULATION</span></p>' +
     '<h3 class="mv-h3">' + esc(t('map_task_h')) + '</h3>' + mapTaskHtml(p.id) +
     MapView.liveHtml({ t, esc, ltr, lat: p.lat, lon: p.lon });
   paintMapLayer();
@@ -794,6 +794,7 @@ function openSheet(kind) {
   $('#m-sheet').hidden = false;
   $$('.m-chip').forEach(b => { if (b.id !== 'm-map') b.setAttribute('aria-pressed', b.dataset.sheet === kind ? 'true' : 'false'); });
   refreshSheetTitle();
+  if (kind === 'point' && mvApi) mvApi.nudge();
   const x = $('#m-sheet-x'); if (x) x.focus();
 }
 function refreshSheetTitle() {

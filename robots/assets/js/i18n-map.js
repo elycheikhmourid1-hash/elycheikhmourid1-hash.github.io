@@ -15,7 +15,8 @@
       map_pt_below: 'تحت الأفق من إحداثيات هذه النقطة المثال.',
       map_fail: 'تعذّر تحميل البلاط. تحقق من الاتصال.',
       map_streets: 'شوارع', map_sat: 'أقمار', map_back: 'المشهد ثلاثي الأبعاد',
-      map_layer_aria: 'التبديل بين الشوارع وصور الأقمار', map_aria: 'خريطة نواكشوط: نقاط EXAMPLE وروبوتات محاكاة'
+      map_layer_aria: 'التبديل بين الشوارع وصور الأقمار', map_aria: 'خريطة نواكشوط: نقاط EXAMPLE وروبوتات محاكاة',
+      map_flag: 'EXAMPLE', map_pin_gs: 'محطة', map_pin_wh: 'مستودع', map_pin_ex1: 'أ', map_pin_ex2: 'ب'
     },
     fr: {
       nav_map: 'Carte', m_map: 'Carte', map_view_title: 'Carte',
@@ -29,7 +30,8 @@
       map_pt_below: 'Sous l’horizon depuis les coordonnées de ce point exemple.',
       map_fail: 'Tuiles indisponibles. Vérifiez la connexion.',
       map_streets: 'Rues', map_sat: 'Satellite', map_back: 'Scène 3D',
-      map_layer_aria: 'Basculer entre les rues et l’imagerie satellite', map_aria: 'Carte de Nouakchott : points EXAMPLE et robots simulés'
+      map_layer_aria: 'Basculer entre les rues et l’imagerie satellite', map_aria: 'Carte de Nouakchott : points EXAMPLE et robots simulés',
+      map_flag: 'EXAMPLE', map_pin_gs: 'Stn', map_pin_wh: 'Ent', map_pin_ex1: 'A', map_pin_ex2: 'B'
     },
     en: {
       nav_map: 'Map', m_map: 'Map', map_view_title: 'Map',
@@ -43,7 +45,8 @@
       map_pt_below: 'Below the horizon from this example point’s coordinates.',
       map_fail: 'Map tiles could not be loaded. Check the connection.',
       map_streets: 'Streets', map_sat: 'Satellite', map_back: '3D scene',
-      map_layer_aria: 'Switch between streets and satellite imagery', map_aria: 'Map of Nouakchott: EXAMPLE points and simulated robots'
+      map_layer_aria: 'Switch between streets and satellite imagery', map_aria: 'Map of Nouakchott: EXAMPLE points and simulated robots',
+      map_flag: 'EXAMPLE', map_pin_gs: 'Stn', map_pin_wh: 'Wh', map_pin_ex1: 'A', map_pin_ex2: 'B'
     }
   };
   [window.I18N, window.I18N3D].forEach(function (T) {
